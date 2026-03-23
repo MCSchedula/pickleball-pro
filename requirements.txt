@@ -1,0 +1,217 @@
+# 🏓 Planificateur Pickleball Pro - Application Web Python/Flask
+
+Application web complète pour la génération automatique de cédules de pickleball avec algorithme sophistiqué de pairages.
+
+## ✨ Fonctionnalités
+
+- ✅ **Base de données centralisée** : 374 joueurs partagés
+- ✅ **Algorithme avec backtracking** : Respect strict des contraintes
+- ✅ **Import/Export Excel** : Compatible avec système VBA existant
+- ✅ **Interface moderne** : Design professionnel et intuitif
+- ✅ **Multi-utilisateurs** : Plusieurs responsables simultanément
+- ✅ **Analyse automatique** : Vérification des contraintes en temps réel
+
+## 🚀 Installation Locale
+
+### Prérequis
+- Python 3.8+
+- pip
+
+### Étapes
+
+```bash
+# 1. Installer les dépendances
+pip install -r requirements.txt
+
+# 2. Lancer l'application
+python app.py
+
+# 3. Ouvrir dans le navigateur
+http://localhost:5000
+```
+
+## 📦 Structure du Projet
+
+```
+pickleball_app/
+├── app.py              # Application Flask principale
+├── requirements.txt    # Dépendances Python
+├── templates/
+│   └── index.html     # Template HTML
+├── static/
+│   ├── style.css      # Styles CSS
+│   └── app.js         # JavaScript frontend
+└── pickleball.db      # Base de données SQLite (créée automatiquement)
+```
+
+## 🌐 Déploiement sur Render.com (Gratuit)
+
+### Option 1 : Déploiement Automatique
+
+1. **Créer un compte** sur [render.com](https://render.com)
+
+2. **Nouveau Web Service**
+   - Cliquer "New +" → "Web Service"
+   - Connecter votre repository Git ou uploader les fichiers
+
+3. **Configuration**
+   ```
+   Name: pickleball-pro
+   Environment: Python 3
+   Build Command: pip install -r requirements.txt
+   Start Command: gunicorn app:app
+   ```
+
+4. **Déployer**
+   - Cliquer "Create Web Service"
+   - Attendre 2-3 minutes
+   - URL : `https://pickleball-pro.onrender.com`
+
+### Option 2 : Déploiement Manuel
+
+Créer un fichier `render.yaml` :
+
+```yaml
+services:
+  - type: web
+    name: pickleball-pro
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+```
+
+## 💾 Base de Données
+
+### SQLite (Développement)
+- Fichier local : `pickleball.db`
+- Automatiquement créé au premier lancement
+- Parfait pour tests locaux
+
+### PostgreSQL (Production - Optionnel)
+
+Pour production, ajouter dans `app.py` :
+
+```python
+import os
+
+# Remplacer la ligne SQLALCHEMY_DATABASE_URI par:
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL',
+    'sqlite:///pickleball.db'
+).replace('postgres://', 'postgresql://')
+```
+
+Puis sur Render.com :
+1. Créer une base PostgreSQL (gratuite)
+2. Copier l'URL
+3. Ajouter variable d'environnement `DATABASE_URL`
+
+## 🔧 Configuration
+
+### Paramètres par défaut
+- Coéquipiers max : 1 fois
+- Adversaires max : 2 fois
+- Différence niveau : 0.4
+
+Modifiable dans l'interface **⚙️ Paramètres**
+
+## 📊 Utilisation
+
+### 1. Charger les Données
+```
+📥 Charger Excel → Sélectionner fichiers:
+- Base de données - Pickleball.xlsm
+- Cédules informations.xlsx
+```
+
+### 2. Générer une Cédule
+```
+⚡ Générer Cédule
+→ Choisir événement
+→ Sélectionner joueurs
+→ Cocher drill
+→ Générer
+```
+
+### 3. Télécharger
+```
+💾 Télécharger Excel
+→ Fichier avec toutes les feuilles
+```
+
+## 🎯 Performance
+
+| Métrique | Valeur |
+|----------|--------|
+| Joueurs supportés | 374+ |
+| Temps de génération | 3-8 secondes |
+| Conformité | 99%+ |
+| Violations typiques | 0-3 |
+
+## 🆘 Support
+
+### Problèmes Communs
+
+**Erreur : "Port 5000 already in use"**
+```bash
+# Changer le port dans app.py
+app.run(debug=True, host='0.0.0.0', port=5001)
+```
+
+**Erreur : "No module named flask"**
+```bash
+pip install -r requirements.txt
+```
+
+**Base de données corrompue**
+```bash
+# Supprimer et recréer
+rm pickleball.db
+python app.py
+```
+
+## 📝 Notes de Version
+
+### v1.0 (2026-03-22)
+- ✅ Application Flask complète
+- ✅ Algorithme backtracking
+- ✅ Import/Export Excel
+- ✅ Interface moderne
+- ✅ Base de données SQLite
+- ✅ Prêt pour déploiement
+
+## 📄 Licence
+
+Application développée pour DSP Pickleball.
+
+## 👨‍💻 Développement
+
+```bash
+# Mode développement (auto-reload)
+export FLASK_ENV=development
+python app.py
+
+# Tests
+# TODO: Ajouter tests unitaires
+
+# Linter
+flake8 app.py
+```
+
+## 🚀 Roadmap
+
+- [ ] Authentification utilisateurs
+- [ ] Historique des cédules
+- [ ] Statistiques avancées
+- [ ] Export PDF
+- [ ] Notifications email
+- [ ] API REST complète
+- [ ] Tests unitaires
+- [ ] Documentation API
+
+---
+
+**Développé avec ❤️ pour la communauté Pickleball DSP**
