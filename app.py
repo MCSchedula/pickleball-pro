@@ -124,6 +124,29 @@ def update_settings():
         Setting.set(key, value)
     return jsonify({'success': True})
 
+@app.route('/api/reset', methods=['POST'])
+def reset_data():
+    try:
+        # Supprimer toutes les données
+        Schedule.query.delete()
+        Event.query.delete()
+        Player.query.delete()
+        Setting.query.delete()
+        
+        db.session.commit()
+
+        # Recréer les paramètres par défaut
+        Setting.set('maxTeammates', 1)
+        Setting.set('maxOpponents', 2)
+        Setting.set('maxTeamLevelDiff', 0.4)
+        Setting.set('maxMatchLevelDiff', 0.49)
+
+        return jsonify({'success': True, 'message': 'Base complètement remise à zéro'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/upload', methods=['POST'])
 def upload_excel():
     if 'file' not in request.files:
