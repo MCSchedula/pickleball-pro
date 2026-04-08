@@ -25,6 +25,8 @@ class Player(db.Model):
     level = db.Column(db.Float, default=3.5)
     email = db.Column(db.String(200))
     status = db.Column(db.String(50), default='Actif')
+    selected = db.Column(db.Boolean, default=False)
+    drill = db.Column(db.Boolean, default=False)
     
     def to_dict(self):
         return {
@@ -35,7 +37,9 @@ class Player(db.Model):
             'gender': self.gender,
             'level': self.level,
             'email': self.email,
-            'status': self.status
+            'status': self.status,
+            'selected': self.selected,
+            'drill': self.drill
         }
 
 class Event(db.Model):
@@ -166,53 +170,70 @@ def upload_excel():
     
     if sheet_name:
         ws = wb[sheet_name]
-        headers = [str(cell.value) if cell.value else '' for cell in ws[1]]
+        headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
         
         # Clear existing players
         Player.query.delete()
         
         for row in ws.iter_rows(min_row=2, values_only=True):
-            if not row[0]:
-                continue
-            
             first_name = ''
             last_name = ''
-            full_name = str(row[0]) if row[0] else ''
+            full_name = ''
             
-            # Find columns
+            # Prénom
             if 'Prénom' in headers:
                 idx = headers.index('Prénom')
-                first_name = str(row[idx]) if len(row) > idx and row[idx] else ''
+                first_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
             
+            # Nom
             if 'Nom' in headers:
                 idx = headers.index('Nom')
-                last_name = str(row[idx]) if len(row) > idx and row[idx] else ''
+                last_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
             
-            if not full_name and first_name and last_name:
-                full_name = f"{first_name} {last_name}"
+            # Nom complet possible en colonne A
+            if len(row) > 0 and row[0]:
+                full_name = str(row[0]).strip()
+            
+            # Construire le nom complet si colonne A vide
+            if not full_name and (first_name or last_name):
+                full_name = f"{first_name} {last_name}".strip()
+            
+            # Ignorer les lignes vides
+            if not full_name:
+                continue
             
             gender = 'M'
             if 'Genre' in headers:
                 idx = headers.index('Genre')
-                gender = str(row[idx]) if len(row) > idx and row[idx] else 'M'
+                gender = str(row[idx]).strip() if len(row) > idx and row[idx] else 'M'
             
             level = 3.5
             if 'Niveau' in headers:
                 idx = headers.index('Niveau')
                 try:
-                    level = float(row[idx]) if len(row) > idx and row[idx] else 3.5
+                    level = float(row[idx]) if len(row) > idx and row[idx] not in (None, '') else 3.5
                 except:
                     level = 3.5
             
             email = ''
             if 'Courriel' in headers:
                 idx = headers.index('Courriel')
-                email = str(row[idx]) if len(row) > idx and row[idx] else ''
+                email = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
             
             status = 'Actif'
             if 'Statut' in headers:
                 idx = headers.index('Statut')
-                status = str(row[idx]) if len(row) > idx and row[idx] else 'Actif'
+                status = str(row[idx]).strip() if len(row) > idx and row[idx] else 'Actif'
+            
+            selected = False
+            if 'Sélectionner (x)' in headers:
+                idx = headers.index('Sélectionner (x)')
+                selected = len(row) > idx and row[idx] and str(row[idx]).strip().lower() == 'x'
+            
+            drill = False
+            if 'Drill (x)' in headers:
+                idx = headers.index('Drill (x)')
+                drill = len(row) > idx and row[idx] and str(row[idx]).strip().lower() == 'x'
             
             player = Player(
                 first_name=first_name,
@@ -221,13 +242,20 @@ def upload_excel():
                 gender=gender,
                 level=level,
                 email=email,
-                status=status
+                status=status,
+                selected=selected,
+                drill=drill
             )
             db.session.add(player)
             result['players'] += 1
+            
+            if selected:
+                result['selected'] += 1
+            if drill:
+                result['drill'] += 1
         
-        db.session.commit()
-    
+        db.session.commit() 
+        
     # Import events
     if 'Événements' in wb.sheetnames:
         ws = wb['Événements']
