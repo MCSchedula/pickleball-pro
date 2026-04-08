@@ -649,17 +649,20 @@ def create_schedule_sheet(wb, schedule_data):
             row += 1
 
 # ==================== INIT ====================
+import os
 
 def init_db():
     with app.app_context():
+        # Supprimer la base existante
+        if os.path.exists("pickleball.db"):
+            os.remove("pickleball.db")
+
         db.create_all()
         
-        # Set default settings
-        if not Setting.query.filter_by(key='maxTeammates').first():
-            Setting.set('maxTeammates', 1)
-            Setting.set('maxOpponents', 2)
-            Setting.set('maxTeamLevelDiff', 0.4)
-            Setting.set('maxMatchLevelDiff', 0.49)
+        Setting.set('maxTeammates', 1)
+        Setting.set('maxOpponents', 2)
+        Setting.set('maxTeamLevelDiff', 0.4)
+        Setting.set('maxMatchLevelDiff', 0.49)
 
 init_db()
 
