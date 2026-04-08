@@ -145,6 +145,14 @@ function showEventDetails(eventId) {
 }
 
 function showPlayerSelection() {
+    appState.selectedPlayers = appState.players
+        .filter(p => p.selected)
+        .map(p => p.id);
+
+    appState.drillPlayers = appState.players
+        .filter(p => p.drill)
+        .map(p => p.id);
+
     const activePlayers = appState.players.filter(p => p.status === 'Actif' || !p.status);
     const grid = document.getElementById('player-selection-grid');
     
