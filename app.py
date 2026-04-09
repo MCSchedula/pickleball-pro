@@ -174,7 +174,6 @@ def upload_excel():
         ws = wb[sheet_name]
         headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
         
-        # Clear existing players
         Player.query.delete()
         
         for row in ws.iter_rows(min_row=2, values_only=True):
@@ -182,25 +181,20 @@ def upload_excel():
             last_name = ''
             full_name = ''
             
-            # Prénom
             if 'Prénom' in headers:
                 idx = headers.index('Prénom')
                 first_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
             
-            # Nom
             if 'Nom' in headers:
                 idx = headers.index('Nom')
                 last_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
             
-            # Nom complet possible en colonne A
             if len(row) > 0 and row[0]:
                 full_name = str(row[0]).strip()
             
-            # Construire le nom complet si colonne A vide
             if not full_name and (first_name or last_name):
                 full_name = f"{first_name} {last_name}".strip()
             
-            # Ignorer les lignes vides
             if not full_name:
                 continue
             
@@ -256,7 +250,7 @@ def upload_excel():
             if drill:
                 result['drill'] += 1
         
-        db.session.commit() 
+        db.session.commit()
         
     # Import events
     if 'Événements' in wb.sheetnames:
@@ -665,8 +659,4 @@ def init_db():
 init_db()
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     app.run(debug=True, host='0.0.0.0', port=5000)
-=======
-    app.run(debug=True, host='0.0.0.0', port=5000)
->>>>>>> fcd23bd62919b5cf8ed7379e3158147c73bdaf26
