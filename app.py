@@ -665,4 +665,8 @@ def init_db():
 init_db()
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     app.run(debug=True, host='0.0.0.0', port=5000)
+=======
+    app.run(debug=True, host='0.0.0.0', port=5000)
+>>>>>>> fcd23bd62919b5cf8ed7379e3158147c73bdaf26
