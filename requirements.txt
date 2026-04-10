@@ -1,8 +1,5 @@
    Flask==3.0.0
    Flask-SQLAlchemy==3.1.1
-<<<<<<< HEAD
    Flask-Migrate==4.1.0
-=======
->>>>>>> fcd23bd62919b5cf8ed7379e3158147c73bdaf26
    openpyxl==3.1.2
    gunicorn==21.2.0
