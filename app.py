@@ -163,95 +163,105 @@ def upload_excel():
     
     result = {'players': 0, 'events': 0, 'selected': 0, 'drill': 0}
     
-    # Import players from "Sélection joueurs" or "Membres"
-    sheet_name = None
-    if 'Sélection joueurs' in wb.sheetnames:
-        sheet_name = 'Sélection joueurs'
-    elif 'Membres' in wb.sheetnames:
-        sheet_name = 'Membres'
+# Import players from "Sélection joueurs", "Membres" or "Noms"
+sheet_name = None
+if 'Sélection joueurs' in wb.sheetnames:
+    sheet_name = 'Sélection joueurs'
+elif 'Membres' in wb.sheetnames:
+    sheet_name = 'Membres'
+elif 'Noms' in wb.sheetnames:
+    sheet_name = 'Noms'
+
+if sheet_name:
+    ws = wb[sheet_name]
+    headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
+    print("HEADERS:", headers)
     
-    if sheet_name:
-        ws = wb[sheet_name]
-        headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
-        
-        Player.query.delete()
-        
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            first_name = ''
-            last_name = ''
-            full_name = ''
-            
-            if 'Prénom' in headers:
-                idx = headers.index('Prénom')
-                first_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
-            
-            if 'Nom' in headers:
-                idx = headers.index('Nom')
-                last_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
-            
-            if len(row) > 0 and row[0]:
-                full_name = str(row[0]).strip()
-            
-            if not full_name and (first_name or last_name):
-                full_name = f"{first_name} {last_name}".strip()
-            
-            if not full_name:
-                continue
-            
-            gender = 'M'
-            if 'Genre' in headers:
-                idx = headers.index('Genre')
-                gender = str(row[idx]).strip() if len(row) > idx and row[idx] else 'M'
-            
-            level = 3.5
-            if 'Niveau' in headers:
-                idx = headers.index('Niveau')
-                try:
-                    level = float(row[idx]) if len(row) > idx and row[idx] not in (None, '') else 3.5
-                except:
-                    level = 3.5
-            
-            email = ''
-            if 'Courriel' in headers:
-                idx = headers.index('Courriel')
-                email = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
-            
-            status = 'Actif'
-            if 'Statut' in headers:
-                idx = headers.index('Statut')
-                status = str(row[idx]).strip() if len(row) > idx and row[idx] else 'Actif'
-            
-            selected = False
-            if 'Sélectionner (x)' in headers:
-                idx = headers.index('Sélectionner (x)')
-                selected = len(row) > idx and row[idx] and str(row[idx]).strip().lower() == 'x'
-            
-            drill = False
-            if 'Drill (x)' in headers:
-                idx = headers.index('Drill (x)')
-                drill = len(row) > idx and row[idx] and str(row[idx]).strip().lower() == 'x'
-            
-            player = Player(
-                first_name=first_name,
-                last_name=last_name,
-                full_name=full_name,
-                gender=gender,
-                level=level,
-                email=email,
-                status=status,
-                selected=selected,
-                drill=drill
-            )
-            db.session.add(player)
-            result['players'] += 1
-            
-            if selected:
-                result['selected'] += 1
-            if drill:
-                result['drill'] += 1
-        
-        db.session.commit()
-        
+    Player.query.delete()
+
+    def is_filled(value):
+        return value is not None and str(value).strip() != ''
+
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        first_name = ''
+        last_name = ''
+        full_name = ''
+
+        if 'Prénom' in headers:
+            idx = headers.index('Prénom')
+            first_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+
+        if 'Nom' in headers:
+            idx = headers.index('Nom')
+            last_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+
+        if 'Nom complet' in headers:
+            idx = headers.index('Nom complet')
+            full_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+        elif len(row) > 0 and row[0]:
+            full_name = str(row[0]).strip()
+
+        if not full_name and (first_name or last_name):
+            full_name = f"{first_name} {last_name}".strip()
+
+        if not full_name:
+            continue
+
+        gender = 'M'
+        if 'Genre' in headers:
+            idx = headers.index('Genre')
+            gender = str(row[idx]).strip() if len(row) > idx and row[idx] else 'M'
+
+        level = 3.5
+        if 'Niveau' in headers:
+            idx = headers.index('Niveau')
+            try:
+                level = float(row[idx]) if len(row) > idx and row[idx] not in (None, '') else 3.5
+            except:
+                level = 3.5
+
+        email = ''
+        if 'Courriel' in headers:
+            idx = headers.index('Courriel')
+            email = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+
+        status = 'Actif'
+        if 'Statut' in headers:
+            idx = headers.index('Statut')
+            status = str(row[idx]).strip() if len(row) > idx and row[idx] else 'Actif'
+
+        selected = False
+        if 'Sélectionner (x)' in headers:
+            idx = headers.index('Sélectionner (x)')
+            selected = len(row) > idx and is_filled(row[idx])
+
+        drill = False
+        if 'Drill (x)' in headers:
+            idx = headers.index('Drill (x)')
+            drill = len(row) > idx and is_filled(row[idx])
+
+        player = Player(
+            first_name=first_name,
+            last_name=last_name,
+            full_name=full_name,
+            gender=gender,
+            level=level,
+            email=email,
+            status=status,
+            selected=selected,
+            drill=drill
+        )
+
+        db.session.add(player)
+        result['players'] += 1
+
+        if selected:
+            result['selected'] += 1
+        if drill:
+            result['drill'] += 1
+
+    db.session.commit()
+
     # Import events
     if 'Événements' in wb.sheetnames:
         ws = wb['Événements']
