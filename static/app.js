@@ -330,43 +330,6 @@ function displayResults(schedule) {
     document.getElementById('results-content').innerHTML = html;
 }
 
-// Download Schedule
-async function downloadSchedule() {
-    if (!appState.currentSchedule) {
-        showToast('Aucune cédule à télécharger', 'error');
-        return;
-    }
-
-    try {
-        const res = await fetch('/api/export-excel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(appState.currentSchedule)
-        });
-
-        if (!res.ok) {
-            throw new Error('Erreur lors de la génération du fichier Excel');
-        }
-
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Cedule_de_la_journee.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        window.URL.revokeObjectURL(url);
-
-        showToast('Téléchargement Excel démarré');
-    } catch (error) {
-        console.error(error);
-        showToast('Erreur: ' + error.message, 'error');
-    }
-}
-
 // Settings
 async function loadSettingsView() {
     document.getElementById('setting-max-teammates').value = appState.settings.maxTeammates || 1;
