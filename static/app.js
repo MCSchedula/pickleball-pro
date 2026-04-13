@@ -97,7 +97,7 @@ async function handleFileUpload(e) {
         });
 
         const result = await res.json();
-        showToast(`Chargé: ${result.players} joueurs, ${result.events} événements`);
+        showToast(`Chargé: ${result.players} joueurs, ${result.events} événements, ${result.selected} sélectionnés, ${result.drill} drill`);
         
         await loadData();
     } catch (error) {
@@ -257,39 +257,45 @@ function updateSelectedCount() {
 }
 
 // Generate Schedule
-async function generateSchedule() {
-    const eventId = parseInt(document.getElementById('generate-event-select').value);
-    if (!eventId) {
-        showToast('Sélectionnez un événement', 'error');
-        return;
+async function downloadSchedule() {
+    if (!appState.currentSchedule) {
+        const saved = localStorage.getItem('currentSchedule');
+        if (saved) {
+            appState.currentSchedule = JSON.parse(saved);
+        }
     }
 
-    if (appState.selectedPlayers.length < 4) {
-        showToast(`Sélectionnez au moins 4 joueurs`, 'error');
+    if (!appState.currentSchedule) {
+        showToast('Aucune cédule à télécharger', 'error');
         return;
     }
-
-    showToast('Génération en cours...');
 
     try {
-        const res = await fetch('/api/generate', {
+        const res = await fetch('/api/export-excel', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                eventId,
-                selectedPlayers: appState.selectedPlayers,
-                drillPlayers: appState.drillPlayers
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(appState.currentSchedule)
         });
 
-        const schedule = await res.json();
-        appState.currentSchedule = schedule;
-        
-        document.querySelector('[data-view="results"]').click();
-        displayResults(schedule);
-        
-        showToast('Cédule générée! 🎉');
+        if (!res.ok) {
+            throw new Error('Erreur lors de la génération du fichier Excel');
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Cedule_de_la_journee.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(url);
+
+        showToast('Téléchargement Excel démarré');
     } catch (error) {
+        console.error(error);
         showToast('Erreur: ' + error.message, 'error');
     }
 }
@@ -325,13 +331,40 @@ function displayResults(schedule) {
 }
 
 // Download Schedule
-function downloadSchedule() {
+async function downloadSchedule() {
     if (!appState.currentSchedule) {
         showToast('Aucune cédule à télécharger', 'error');
         return;
     }
-    
-    showToast('Téléchargement disponible prochainement');
+
+    try {
+        const res = await fetch('/api/export-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(appState.currentSchedule)
+        });
+
+        if (!res.ok) {
+            throw new Error('Erreur lors de la génération du fichier Excel');
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Cedule_de_la_journee.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(url);
+
+        showToast('Téléchargement Excel démarré');
+    } catch (error) {
+        console.error(error);
+        showToast('Erreur: ' + error.message, 'error');
+    }
 }
 
 // Settings
