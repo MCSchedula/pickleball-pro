@@ -402,8 +402,8 @@ def export_excel():
     title_font = Font(bold=True, size=12)
     bold = Font(bold=True)
 
-    grey_fill = PatternFill(fill_type='solid', fgColor='D9D9D9')
-    light_fill = PatternFill(fill_type='solid', fgColor='F2F2F2')
+    grey_fill = PatternFill(fill_type='solid', fgColor='BFBFBF')
+    light_fill = PatternFill(fill_type='solid', fgColor='EDEDED')
 
     thin = Side(style='thin', color='A6A6A6')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -428,6 +428,25 @@ def export_excel():
 
     thin = Side(style='thin', color='A6A6A6')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    # Ligne 1 : en-tête principal
+    total_columns = 2 + (len(periods) * 2)
+
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_columns)
+
+    event_day = str(event.get('day', '')).strip()
+    event_name = str(event.get('name', '')).strip()
+
+    league_name = 'DSP'
+    location_name = 'Tennis 13'
+
+    header_text = f"{event_day} (Drill)    Ligue: {league_name}    Événement: {event_name}    Endroit: {location_name}"
+
+    header_cell = ws.cell(row=1, column=1, value=header_text)
+    header_cell.font = Font(bold=True, size=12)
+    header_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    header_cell.fill = grey_fill
+    header_cell.border = border
 
     # Ligne 2 : heures
     ws.cell(row=2, column=1, value='Terrain')
@@ -512,7 +531,7 @@ def export_excel():
         col_letter = get_column_letter(col_idx)
         ws.column_dimensions[col_letter].width = 18
 
-        ws.row_dimensions[1].height = 22
+        ws.row_dimensions[1].height = 26
         ws.row_dimensions[2].height = 22
 
         for r in range(3, row):
