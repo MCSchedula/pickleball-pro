@@ -448,6 +448,25 @@ def export_excel():
     header_cell.fill = grey_fill
     header_cell.border = border
 
+    # Ligne 1 : en-tête principal
+    total_columns = 2 + (len(periods) * 2)
+
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_columns)
+
+    event_day = str(event.get('day', '')).strip()
+    event_name = str(event.get('name', '')).strip()
+
+    league_name = 'DSP'
+    location_name = 'Tennis 13'
+
+    header_text = f"{event_day} (Drill)    Ligue: {league_name}    Événement: {event_name}    Endroit: {location_name}"
+
+    header_cell = ws.cell(row=1, column=1, value=header_text)
+    header_cell.font = Font(bold=True, size=12)
+    header_cell.alignment = center
+    header_cell.fill = grey_fill
+    header_cell.border = border
+
     # Ligne 2 : heures
     ws.cell(row=2, column=1, value='Terrain')
     ws.cell(row=2, column=2, value='Côté')
