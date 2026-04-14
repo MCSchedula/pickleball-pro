@@ -257,6 +257,46 @@ function updateSelectedCount() {
 }
 
 // Generate Schedule
+async function generateSchedule() {
+    const eventId = parseInt(document.getElementById('generate-event-select').value);
+    if (!eventId) {
+        showToast('Sélectionnez un événement', 'error');
+        return;
+    }
+
+    if (appState.selectedPlayers.length < 4) {
+        showToast('Sélectionnez au moins 4 joueurs', 'error');
+        return;
+    }
+
+    showToast('Génération en cours...');
+
+    try {
+        const res = await fetch('/api/generate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                eventId,
+                selectedPlayers: appState.selectedPlayers,
+                drillPlayers: appState.drillPlayers
+            })
+        });
+
+        const schedule = await res.json();
+        appState.currentSchedule = schedule;
+        localStorage.setItem('currentSchedule', JSON.stringify(schedule));
+
+        document.querySelector('[data-view="results"]').click();
+        displayResults(schedule);
+
+        showToast('Cédule générée! 🎉');
+    } catch (error) {
+        console.error(error);
+        showToast('Erreur: ' + error.message, 'error');
+    }
+}
+
+// Download Schedule
 async function downloadSchedule() {
     if (!appState.currentSchedule) {
         const saved = localStorage.getItem('currentSchedule');
