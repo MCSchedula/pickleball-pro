@@ -163,14 +163,14 @@ def upload_excel():
 
     result = {'players': 0, 'events': 0, 'selected': 0, 'drill': 0}
 
-    # Import players from "Sélection joueurs", "Membres" or "Noms"
+    # Import players from "Noms", "Sélection joueurs" or "Membres"
     sheet_name = None
-    if 'Sélection joueurs' in wb.sheetnames:
+    if 'Noms' in wb.sheetnames:
+        sheet_name = 'Noms'
+    elif 'Sélection joueurs' in wb.sheetnames:
         sheet_name = 'Sélection joueurs'
     elif 'Membres' in wb.sheetnames:
         sheet_name = 'Membres'
-    elif 'Noms' in wb.sheetnames:
-        sheet_name = 'Noms'
 
     if sheet_name:
         ws = wb[sheet_name]
@@ -380,6 +380,142 @@ def generate_schedule():
     db.session.commit()
     
     return jsonify(schedule_result)
+
+@app.route('/api/export-excel', methods=['POST'])
+def export_excel():
+    data = request.json
+    if not data:
+        return jsonify({'error': 'Aucune cédule à exporter'}), 400
+
+    schedule = data
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Cédule de la journée'
+
+    # Styles
+    bold_font = Font(bold=True)
+    title_font = Font(bold=True, size=14)
+    center = Alignment(horizontal='center', vertical='center')
+    left = Alignment(horizontal='left', vertical='center')
+    thin = Side(style='thin', color='000000')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    fill_header = PatternFill(fill_type='solid', fgColor='D9EAF7')
+
+    event = schedule.get('event', {})
+    periods = schedule.get('periods', [])
+
+    # En-tête
+    ws['A1'] = 'Cédule de la journée'
+    ws['A1'].font = title_font
+
+    ws['A2'] = 'Événement'
+    ws['B2'] = event.get('name', '')
+    ws['A3'] = 'Journée'
+    ws['B3'] = event.get('day', '')
+    ws['A4'] = 'Heure'
+    ws['B4'] = f"{event.get('startTime', '')} à {event.get('endTime', '')}"
+
+    for cell in ['A2', 'A3', 'A4']:
+        ws[cell].font = bold_font
+
+    row = 6
+
+    # Colonnes
+    ws.cell(row=row, column=1, value='Période')
+    ws.cell(row=row, column=2, value='Heure')
+    ws.cell(row=row, column=3, value='Terrain')
+    ws.cell(row=row, column=4, value='Côté')
+    ws.cell(row=row, column=5, value='Joueur 1')
+    ws.cell(row=row, column=6, value='Joueur 2')
+
+    for col in range(1, 7):
+        c = ws.cell(row=row, column=col)
+        c.font = bold_font
+        c.alignment = center
+        c.border = border
+        c.fill = fill_header
+
+    row += 1
+
+    # Données
+    for period in periods:
+        period_name = period.get('name', '')
+        period_time = period.get('time', '')
+        courts = period.get('courts', [])
+
+        for court in courts:
+            court_number = court.get('number', '')
+
+            # Côté A
+            ws.cell(row=row, column=1, value=period_name)
+            ws.cell(row=row, column=2, value=period_time)
+            ws.cell(row=row, column=3, value=court_number)
+            ws.cell(row=row, column=4, value='A')
+            ws.cell(row=row, column=5, value=court['sideA']['player1']['fullName'])
+            ws.cell(row=row, column=6, value=court['sideA']['player2']['fullName'])
+
+            for col in range(1, 7):
+                ws.cell(row=row, column=col).border = border
+                ws.cell(row=row, column=col).alignment = left if col >= 5 else center
+
+            row += 1
+
+            # Côté B
+            ws.cell(row=row, column=1, value=period_name)
+            ws.cell(row=row, column=2, value=period_time)
+            ws.cell(row=row, column=3, value=court_number)
+            ws.cell(row=row, column=4, value='B')
+            ws.cell(row=row, column=5, value=court['sideB']['player1']['fullName'])
+            ws.cell(row=row, column=6, value=court['sideB']['player2']['fullName'])
+
+            for col in range(1, 7):
+                ws.cell(row=row, column=col).border = border
+                ws.cell(row=row, column=col).alignment = left if col >= 5 else center
+
+            row += 1
+
+        # Joueurs en pause
+        sitting = period.get('sitting', [])
+        if sitting:
+            ws.cell(row=row, column=1, value=period_name)
+            ws.cell(row=row, column=2, value=period_time)
+            ws.cell(row=row, column=3, value='Pause')
+            ws.cell(row=row, column=4, value='')
+            ws.cell(row=row, column=5, value=', '.join([p['fullName'] for p in sitting]))
+            ws.cell(row=row, column=6, value='')
+
+            for col in range(1, 7):
+                ws.cell(row=row, column=col).border = border
+                ws.cell(row=row, column=col).alignment = left if col >= 5 else center
+
+            row += 1
+
+    # Largeur colonnes
+    widths = {
+        'A': 18,
+        'B': 12,
+        'C': 10,
+        'D': 8,
+        'E': 28,
+        'F': 28
+    }
+    for col, width in widths.items():
+        ws.column_dimensions[col].width = width
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    safe_day = str(event.get('day', 'Jour')).replace('/', '-')
+    filename = f"Cedule_de_la_journee_{safe_day}.xlsx"
+
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
 
 @app.route('/api/export/<int:schedule_id>', methods=['GET'])
 def export_schedule(schedule_id):
