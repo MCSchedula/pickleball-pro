@@ -6,6 +6,7 @@ import json
 import io
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 from collections import Counter
 import random
 
@@ -388,127 +389,109 @@ def export_excel():
         return jsonify({'error': 'Aucune cédule à exporter'}), 400
 
     schedule = data
+    event = schedule.get('event', {})
+    periods = schedule.get('periods', [])
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Cédule de la journée'
 
-    # Styles
-    bold_font = Font(bold=True)
-    title_font = Font(bold=True, size=14)
-    center = Alignment(horizontal='center', vertical='center')
-    left = Alignment(horizontal='left', vertical='center')
-    thin = Side(style='thin', color='000000')
-    border = Border(left=thin, right=thin, top=thin, bottom=thin)
-    fill_header = PatternFill(fill_type='solid', fgColor='D9EAF7')
+    center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    bold = Font(bold=True)
 
-    event = schedule.get('event', {})
-    periods = schedule.get('periods', [])
-
-    # En-tête
-    ws['A1'] = 'Cédule de la journée'
-    ws['A1'].font = title_font
-
-    ws['A2'] = 'Événement'
-    ws['B2'] = event.get('name', '')
-    ws['A3'] = 'Journée'
-    ws['B3'] = event.get('day', '')
-    ws['A4'] = 'Heure'
-    ws['B4'] = f"{event.get('startTime', '')} à {event.get('endTime', '')}"
-
-    for cell in ['A2', 'A3', 'A4']:
-        ws[cell].font = bold_font
-
-    row = 6
-
-    # Colonnes
-    ws.cell(row=row, column=1, value='Période')
-    ws.cell(row=row, column=2, value='Heure')
-    ws.cell(row=row, column=3, value='Terrain')
-    ws.cell(row=row, column=4, value='Côté')
-    ws.cell(row=row, column=5, value='Joueur 1')
-    ws.cell(row=row, column=6, value='Joueur 2')
-
-    for col in range(1, 7):
-        c = ws.cell(row=row, column=col)
-        c.font = bold_font
-        c.alignment = center
-        c.border = border
-        c.fill = fill_header
-
-    row += 1
-
-    # Données
+    # Déterminer le nombre maximal de terrains
+    max_courts = 0
     for period in periods:
-        period_name = period.get('name', '')
-        period_time = period.get('time', '')
         courts = period.get('courts', [])
+        if len(courts) > max_courts:
+            max_courts = len(courts)
 
-        for court in courts:
-            court_number = court.get('number', '')
+    # Ligne 1 : en-tête principal
+    total_columns = 2 + (len(periods) * 2)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_columns)
 
-            # Côté A
-            ws.cell(row=row, column=1, value=period_name)
-            ws.cell(row=row, column=2, value=period_time)
-            ws.cell(row=row, column=3, value=court_number)
-            ws.cell(row=row, column=4, value='A')
-            ws.cell(row=row, column=5, value=court['sideA']['player1']['fullName'])
-            ws.cell(row=row, column=6, value=court['sideA']['player2']['fullName'])
+    event_day = event.get('day', '')
+    event_name = event.get('name', '')
+    ws.cell(row=1, column=1, value=f"{event_day}    Événement: {event_name}")
+    ws.cell(row=1, column=1).font = Font(bold=True, size=14)
+    ws.cell(row=1, column=1).alignment = center
 
-            for col in range(1, 7):
-                ws.cell(row=row, column=col).border = border
-                ws.cell(row=row, column=col).alignment = left if col >= 5 else center
+    # Ligne 2 : heures
+    ws.cell(row=2, column=1, value='Terrain')
+    ws.cell(row=2, column=2, value='Côté')
+    ws.cell(row=2, column=1).font = bold
+    ws.cell(row=2, column=2).font = bold
+    ws.cell(row=2, column=1).alignment = center
+    ws.cell(row=2, column=2).alignment = center
 
-            row += 1
+    col = 3
+    for period in periods:
+        time_label = period.get('time', '')
+        ws.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 1)
+        ws.cell(row=2, column=col, value=time_label)
+        ws.cell(row=2, column=col).font = bold
+        ws.cell(row=2, column=col).alignment = center
+        col += 2
 
-            # Côté B
-            ws.cell(row=row, column=1, value=period_name)
-            ws.cell(row=row, column=2, value=period_time)
-            ws.cell(row=row, column=3, value=court_number)
-            ws.cell(row=row, column=4, value='B')
-            ws.cell(row=row, column=5, value=court['sideB']['player1']['fullName'])
-            ws.cell(row=row, column=6, value=court['sideB']['player2']['fullName'])
+    # Données : 2 lignes par terrain (A et B)
+    row = 3
+    for court_index in range(max_courts):
+        terrain_no = court_index + 1
 
-            for col in range(1, 7):
-                ws.cell(row=row, column=col).border = border
-                ws.cell(row=row, column=col).alignment = left if col >= 5 else center
+        # Ligne A
+        ws.cell(row=row, column=1, value=terrain_no)
+        ws.cell(row=row, column=2, value='A')
+        ws.cell(row=row, column=1).alignment = center
+        ws.cell(row=row, column=2).alignment = center
 
-            row += 1
+        # Ligne B
+        ws.cell(row=row + 1, column=1, value=terrain_no)
+        ws.cell(row=row + 1, column=2, value='B')
+        ws.cell(row=row + 1, column=1).alignment = center
+        ws.cell(row=row + 1, column=2).alignment = center
 
-        # Joueurs en pause
-        sitting = period.get('sitting', [])
-        if sitting:
-            ws.cell(row=row, column=1, value=period_name)
-            ws.cell(row=row, column=2, value=period_time)
-            ws.cell(row=row, column=3, value='Pause')
-            ws.cell(row=row, column=4, value='')
-            ws.cell(row=row, column=5, value=', '.join([p['fullName'] for p in sitting]))
-            ws.cell(row=row, column=6, value='')
+        col = 3
+        for period in periods:
+            courts = period.get('courts', [])
 
-            for col in range(1, 7):
-                ws.cell(row=row, column=col).border = border
-                ws.cell(row=row, column=col).alignment = left if col >= 5 else center
+            if court_index < len(courts):
+                court = courts[court_index]
 
-            row += 1
+                side_a = court.get('sideA', {})
+                side_b = court.get('sideB', {})
 
-    # Largeur colonnes
-    widths = {
-        'A': 18,
-        'B': 12,
-        'C': 10,
-        'D': 8,
-        'E': 28,
-        'F': 28
-    }
-    for col, width in widths.items():
-        ws.column_dimensions[col].width = width
+                a1 = side_a.get('player1', {}).get('fullName', '')
+                a2 = side_a.get('player2', {}).get('fullName', '')
+                b1 = side_b.get('player1', {}).get('fullName', '')
+                b2 = side_b.get('player2', {}).get('fullName', '')
+
+                ws.cell(row=row, column=col, value=a1)
+                ws.cell(row=row, column=col + 1, value=a2)
+                ws.cell(row=row + 1, column=col, value=b1)
+                ws.cell(row=row + 1, column=col + 1, value=b2)
+
+                ws.cell(row=row, column=col).alignment = center
+                ws.cell(row=row, column=col + 1).alignment = center
+                ws.cell(row=row + 1, column=col).alignment = center
+                ws.cell(row=row + 1, column=col + 1).alignment = center
+
+            col += 2
+
+        row += 2
+
+    # Largeur des colonnes
+    ws.column_dimensions['A'].width = 8
+    ws.column_dimensions['B'].width = 8
+
+    for col_idx in range(3, total_columns + 1):
+        col_letter = get_column_letter(col_idx)
+        ws.column_dimensions[col_letter].width = 18
 
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
 
-    safe_day = str(event.get('day', 'Jour')).replace('/', '-')
-    filename = f"Cedule_de_la_journee_{safe_day}.xlsx"
+    filename = "Cedule_de_la_journee.xlsx"
 
     return send_file(
         output,
