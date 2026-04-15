@@ -499,8 +499,8 @@ def export_excel():
     # Données : 2 lignes par terrain (A et B)
     row = 3
     for court_index in range(max_courts):
-        terrain_no = court_index + 1
-
+        terrain_numbers = [3, 4, 5, 6, 7, 8, 10, 11, 12, 99]
+        terrain_no = terrain_numbers[court_index] if court_index < len(terrain_numbers) else court_index + 1
         # Ligne A
         ws.cell(row=row, column=1, value=terrain_no)
         ws.cell(row=row, column=2, value='A')
