@@ -402,8 +402,8 @@ def export_excel():
     title_font = Font(bold=True, size=12)
     bold = Font(bold=True)
 
-    grey_fill = PatternFill(fill_type='solid', fgColor='BFBFBF')
-    light_fill = PatternFill(fill_type='solid', fgColor='EDEDED')
+    grey_fill = PatternFill(fill_type='solid', fgColor='D9D9D9')
+    light_fill = PatternFill(fill_type='solid', fgColor='F7F7F7')
 
     thin = Side(style='thin', color='A6A6A6')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -502,11 +502,14 @@ def export_excel():
         terrain_numbers = [3, 4, 5, 6, 7, 8, 10, 11, 12, 99]
         terrain_no = terrain_numbers[court_index] if court_index < len(terrain_numbers) else court_index + 1
         # Ligne A
+        ws.merge_cells(start_row=row, start_column=1, end_row=row + 1, end_column=1)
         ws.cell(row=row, column=1, value=terrain_no)
+        ws.cell(row=row, column=1).alignment = center
+        ws.cell(row=row, column=1).border = border
+        ws.cell(row=row, column=1).fill = light_fill
         ws.cell(row=row, column=2, value='A')
 
         # Ligne B
-        ws.cell(row=row + 1, column=1, value=terrain_no)
         ws.cell(row=row + 1, column=2, value='B')
 
         for c in [1, 2]:
@@ -552,7 +555,7 @@ def export_excel():
 
     for col_idx in range(3, total_columns + 1):
         col_letter = get_column_letter(col_idx)
-        ws.column_dimensions[col_letter].width = 18
+        ws.column_dimensions[col_letter].width = 16
 
         ws.row_dimensions[1].height = 26
         ws.row_dimensions[2].height = 22
