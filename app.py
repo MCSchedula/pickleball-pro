@@ -456,10 +456,14 @@ def export_excel():
     event_day = str(event.get('day', '')).strip()
     event_name = str(event.get('name', '')).strip()
 
+    # Temporaire: date fixe pour reproduire le modèle VBA
+    event_date = "2026-04-09"
+
     league_name = 'DSP'
     location_name = 'Tennis 13'
 
-    header_text = f"{event_day} (Drill)    Ligue: {league_name}    Événement: {event_name}    Endroit: {location_name}"
+    header_day = f"{event_day} {event_date}".strip()
+    header_text = f"{header_day} (Drill)    Ligue: {league_name}    Événement: {event_name}    Endroit: {location_name}"
 
     header_cell = ws.cell(row=1, column=1, value=header_text)
     header_cell.font = Font(bold=True, size=12)
