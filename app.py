@@ -396,6 +396,7 @@ def export_excel():
     ws = wb.active
     ws.title = 'Cédule de la journée'
     ws_players = wb.create_sheet('Cédule pour chaque joueur')
+    ws_stats = wb.create_sheet('Cédule - Statistiques')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
     left = Alignment(horizontal='left', vertical='center', wrap_text=True)
@@ -584,6 +585,7 @@ def export_excel():
         cell.fill = grey_fill
         cell.border = border
 
+    player_stats = {}
     player_rows = []
 
     for period in periods:
@@ -604,6 +606,36 @@ def export_excel():
             player_rows.append([a2, period_name, period_time, terrain, 'A', a1, b1, b2])
             player_rows.append([b1, period_name, period_time, terrain, 'B', b2, a1, a2])
             player_rows.append([b2, period_name, period_time, terrain, 'B', b1, a1, a2])
+
+            for joueur, cote, partenaire, adv1, adv2, periode_nom in [
+                (a1, 'A', a2, b1, b2, period_name),
+                (a2, 'A', a1, b1, b2, period_name),
+                (b1, 'B', b2, a1, a2, period_name),
+                (b2, 'B', b1, a1, a2, period_name),
+            ]:
+                if joueur not in player_stats:
+                    player_stats[joueur] = {
+                        'matches': 0,
+                        'side_a': 0,
+                        'side_b': 0,
+                        'drill': 0,
+                        'partners': set(),
+                        'opponents': set(),
+                    }
+
+                player_stats[joueur]['matches'] += 1
+
+                if cote == 'A':
+                    player_stats[joueur]['side_a'] += 1
+                else:
+                    player_stats[joueur]['side_b'] += 1
+
+                if 'Drill' in periode_nom:
+                    player_stats[joueur]['drill'] += 1
+
+                player_stats[joueur]['partners'].add(partenaire)
+                player_stats[joueur]['opponents'].add(adv1)
+                player_stats[joueur]['opponents'].add(adv2)
 
     # Trier par joueur puis par heure
     player_rows.sort(key=lambda x: (x[0], x[2], x[3]))
@@ -635,6 +667,67 @@ def export_excel():
     ws_players.row_dimensions[2].height = 22
     for r in range(3, row_players):
         ws_players.row_dimensions[r].height = 22
+
+    # ==============================
+    # Feuille : Cédule - Statistiques
+    # ==============================
+    ws_stats['A1'] = 'Cédule - Statistiques'
+    ws_stats['A1'].font = Font(bold=True, size=12)
+    ws_stats['A1'].alignment = center
+
+    stats_headers = [
+        'Joueur',
+        'Nb matchs',
+        'Nb côté A',
+        'Nb côté B',
+        'Nb Drill',
+        'Partenaires différents',
+        'Adversaires différents'
+    ]
+
+    for col_idx, header in enumerate(stats_headers, start=1):
+        cell = ws_stats.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    row_stats = 3
+    for joueur in sorted(player_stats.keys()):
+        stats = player_stats[joueur]
+
+        row_values = [
+            joueur,
+            stats['matches'],
+            stats['side_a'],
+            stats['side_b'],
+            stats['drill'],
+            len(stats['partners']),
+            len(stats['opponents'])
+        ]
+
+        for col_idx, value in enumerate(row_values, start=1):
+            cell = ws_stats.cell(row=row_stats, column=col_idx, value=value)
+            cell.alignment = center
+            cell.border = border
+
+        row_stats += 1
+
+    widths_stats = {
+        'A': 28,
+        'B': 12,
+        'C': 12,
+        'D': 12,
+        'E': 10,
+        'F': 20,
+        'G': 20
+    }
+
+    for col_letter, width in widths_stats.items():
+        ws_stats.column_dimensions[col_letter].width = width
+
+    ws_stats.row_dimensions[1].height = 24
+    ws_stats.row_dimensions[2].height = 22
 
     output = io.BytesIO()
     wb.save(output)
