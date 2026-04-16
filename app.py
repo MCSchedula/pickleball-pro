@@ -395,6 +395,7 @@ def export_excel():
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Cédule de la journée'
+    ws_players = wb.create_sheet('Cédule pour chaque joueur')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
     left = Alignment(horizontal='left', vertical='center', wrap_text=True)
@@ -567,6 +568,73 @@ def export_excel():
 
         for r in range(3, row):
             ws.row_dimensions[r].height = 26
+
+    # ==============================
+    # Feuille : Cédule pour chaque joueur
+    # ==============================
+    ws_players['A1'] = 'Cédule pour chaque joueur'
+    ws_players['A1'].font = Font(bold=True, size=12)
+    ws_players['A1'].alignment = center
+
+    headers_players = ['Joueur', 'Période', 'Heure', 'Terrain', 'Côté', 'Partenaire', 'Adversaire 1', 'Adversaire 2']
+    for col_idx, header in enumerate(headers_players, start=1):
+        cell = ws_players.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    player_rows = []
+
+    for period in periods:
+        period_name = period.get('name', '')
+        period_time = period.get('time', '')
+        courts = period.get('courts', [])
+
+        for court in courts:
+            terrain = court.get('number', '')
+
+            # Côté A
+            a1 = court['sideA']['player1']['fullName']
+            a2 = court['sideA']['player2']['fullName']
+            b1 = court['sideB']['player1']['fullName']
+            b2 = court['sideB']['player2']['fullName']
+
+            player_rows.append([a1, period_name, period_time, terrain, 'A', a2, b1, b2])
+            player_rows.append([a2, period_name, period_time, terrain, 'A', a1, b1, b2])
+            player_rows.append([b1, period_name, period_time, terrain, 'B', b2, a1, a2])
+            player_rows.append([b2, period_name, period_time, terrain, 'B', b1, a1, a2])
+
+    # Trier par joueur puis par heure
+    player_rows.sort(key=lambda x: (x[0], x[2], x[3]))
+
+    row_players = 3
+    for row_data in player_rows:
+        for col_idx, value in enumerate(row_data, start=1):
+            cell = ws_players.cell(row=row_players, column=col_idx, value=value)
+            cell.alignment = center
+            cell.border = border
+        row_players += 1
+
+    # Largeur des colonnes
+    widths_players = {
+        'A': 28,
+        'B': 16,
+        'C': 12,
+        'D': 10,
+        'E': 8,
+        'F': 28,
+        'G': 28,
+        'H': 28
+    }
+
+    for col_letter, width in widths_players.items():
+        ws_players.column_dimensions[col_letter].width = width
+
+    ws_players.row_dimensions[1].height = 24
+    ws_players.row_dimensions[2].height = 22
+    for r in range(3, row_players):
+        ws_players.row_dimensions[r].height = 22
 
     output = io.BytesIO()
     wb.save(output)
