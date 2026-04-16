@@ -507,10 +507,14 @@ def export_excel():
         ws.cell(row=row, column=1).alignment = center
         ws.cell(row=row, column=1).border = border
         ws.cell(row=row, column=1).fill = light_fill
-        ws.cell(row=row, column=2, value='A')
 
-        # Ligne B
+        ws.cell(row=row, column=2, value='A')
         ws.cell(row=row + 1, column=2, value='B')
+
+        for r in [row, row + 1]:
+            ws.cell(row=r, column=2).alignment = center
+            ws.cell(row=r, column=2).border = border
+            ws.cell(row=r, column=2).fill = light_fill
 
         for c in [1, 2]:
             ws.cell(row=row, column=c).alignment = center
@@ -544,6 +548,7 @@ def export_excel():
                     for c in [col, col + 1]:
                         ws.cell(row=r, column=c).alignment = center
                         ws.cell(row=r, column=c).border = border
+                        ws.cell(row=r, column=c).fill = PatternFill(fill_type='solid', fgColor='FFFFFF')
 
             col += 2
 
@@ -561,7 +566,7 @@ def export_excel():
         ws.row_dimensions[2].height = 22
 
         for r in range(3, row):
-            ws.row_dimensions[r].height = 30
+            ws.row_dimensions[r].height = 26
 
     output = io.BytesIO()
     wb.save(output)
