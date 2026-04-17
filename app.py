@@ -668,66 +668,7 @@ def export_excel():
     for r in range(3, row_players):
         ws_players.row_dimensions[r].height = 22
 
-    # ==============================
-    # Feuille : Cédule - Statistiques
-    # ==============================
-    ws_stats['A1'] = 'Cédule - Statistiques'
-    ws_stats['A1'].font = Font(bold=True, size=12)
-    ws_stats['A1'].alignment = center
 
-    stats_headers = [
-        'Joueur',
-        'Nb matchs',
-        'Nb côté A',
-        'Nb côté B',
-        'Nb Drill',
-        'Partenaires différents',
-        'Adversaires différents'
-    ]
-
-    for col_idx, header in enumerate(stats_headers, start=1):
-        cell = ws_stats.cell(row=2, column=col_idx, value=header)
-        cell.font = bold
-        cell.alignment = center
-        cell.fill = grey_fill
-        cell.border = border
-
-    row_stats = 3
-    for joueur in sorted(player_stats.keys()):
-        stats = player_stats[joueur]
-
-        row_values = [
-            joueur,
-            stats['matches'],
-            stats['side_a'],
-            stats['side_b'],
-            stats['drill'],
-            len(stats['partners']),
-            len(stats['opponents'])
-        ]
-
-        for col_idx, value in enumerate(row_values, start=1):
-            cell = ws_stats.cell(row=row_stats, column=col_idx, value=value)
-            cell.alignment = center
-            cell.border = border
-
-        row_stats += 1
-
-    widths_stats = {
-        'A': 28,
-        'B': 12,
-        'C': 12,
-        'D': 12,
-        'E': 10,
-        'F': 20,
-        'G': 20
-    }
-
-    for col_letter, width in widths_stats.items():
-        ws_stats.column_dimensions[col_letter].width = width
-
-    ws_stats.row_dimensions[1].height = 24
-    ws_stats.row_dimensions[2].height = 22
 
     output = io.BytesIO()
     wb.save(output)
@@ -743,7 +684,172 @@ def export_excel():
     )
 
 @app.route('/api/export/<int:schedule_id>', methods=['GET'])
-def export_schedule(schedule_id):
+def export_schedule(schedule_id):    
+    # ==============================
+    # Feuille : Cédule - Statistiques
+    # ==============================
+    ws_stats['A1'] = 'Jour et Date de la rencontre'
+    ws_stats['A1'].font = Font(bold=True, size=14)
+
+    ws_stats['G1'] = 'Commentaires'
+    ws_stats['G1'].font = Font(bold=True, size=14)
+    ws_stats['G1'].alignment = center
+
+    # Informations de base
+    event_day = str(event.get('day', '')).strip()
+    event_name = str(event.get('name', '')).strip()
+
+    # Temporaire : date fixe, comme on l'a fait pour l'en-tête
+    event_date = '4/9/2026'
+
+    # Nombre de joueurs
+    selected_players_set = set()
+    drill_players_set = set()
+
+    # Terrains utilisés
+    used_courts = []
+
+    # Nombre de joueurs drill / périodes drill
+    drill_periods_count = 0
+
+    for period in periods:
+        period_name = period.get('name', '')
+        courts = period.get('courts', [])
+
+        if 'Drill' in period_name:
+            drill_periods_count += 1
+
+        for court in courts:
+            terrain = court.get('number', '')
+            if terrain not in used_courts:
+                used_courts.append(terrain)
+
+            side_a = court.get('sideA', {})
+            side_b = court.get('sideB', {})
+
+            a1 = side_a.get('player1', {}).get('fullName', '')
+            a2 = side_a.get('player2', {}).get('fullName', '')
+            b1 = side_b.get('player1', {}).get('fullName', '')
+            b2 = side_b.get('player2', {}).get('fullName', '')
+
+            for p in [a1, a2, b1, b2]:
+                if p:
+                    selected_players_set.add(p)
+
+            if 'Drill' in period_name:
+                for p in [a1, a2, b1, b2]:
+                    if p:
+                        drill_players_set.add(p)
+
+    used_courts = sorted(used_courts, key=lambda x: (isinstance(x, str), x))
+
+    selected_count = len(selected_players_set)
+    drill_count = len(drill_players_set)
+    drill_yes_no = 'Oui' if drill_count > 0 else 'Non'
+
+    # Heure début et fin
+    start_time = str(event.get('startTime', '')).strip()
+    end_time = str(event.get('endTime', '')).strip()
+    time_range = f"{start_time} - {end_time}" if start_time or end_time else ''
+
+    # Durée drill et durée partie
+    drill_minutes = event.get('drillMinutes', 0)
+    period_duration = event.get('periodDuration', 20)
+
+    # Nombre de terrains
+    court_count = len(used_courts)
+    courts_text = '   '.join([str(c) for c in used_courts])
+
+    # Libellés
+    ws_stats['A2'] = 'Nom de la journée'
+    ws_stats['A3'] = 'Date de la rencontre'
+
+    ws_stats['A6'] = 'Nombre de joueurs sélectionnés'
+
+    ws_stats['A9'] = 'Drill et Nombre de joueurs pour la Drill'
+    ws_stats['A10'] = 'Oui / Non'
+    ws_stats['A11'] = 'Nombre de joueurs'
+    ws_stats['A12'] = 'Durée en minutes'
+
+    ws_stats['A15'] = 'Horaire et parties'
+    ws_stats['A16'] = 'Heure début et fin'
+    ws_stats['A17'] = "Durée d'une partie en minutes"
+
+    ws_stats['A20'] = 'Nombre de terrains réservés'
+    ws_stats['A21'] = 'Numéros'
+
+    # Valeurs
+    ws_stats['D2'] = event_day
+    ws_stats['D3'] = event_date
+
+    ws_stats['D6'] = selected_count
+
+    ws_stats['D10'] = drill_yes_no
+    ws_stats['D11'] = drill_count
+    ws_stats['D12'] = drill_minutes
+
+    ws_stats['D16'] = time_range
+    ws_stats['D17'] = period_duration
+
+    ws_stats['D20'] = court_count
+    ws_stats['G21'] = courts_text
+
+    # Mise en forme
+    bold_big = Font(bold=True, size=14)
+    bold_normal = Font(bold=True, size=11)
+    normal_font = Font(size=11)
+
+    for cell_ref in ['A1', 'G1', 'A6', 'A9', 'A15', 'A20']:
+        ws_stats[cell_ref].font = bold_big
+
+    for cell_ref in ['A2', 'A3', 'A10', 'A11', 'A12', 'A16', 'A17', 'A21']:
+        ws_stats[cell_ref].font = bold_normal
+
+    for cell_ref in ['D2', 'D3', 'D6', 'D10', 'D11', 'D12', 'D16', 'D17', 'D20', 'G21']:
+        ws_stats[cell_ref].font = normal_font
+
+    # Alignement
+    for row_idx in range(1, 25):
+        for col_idx in range(1, 10):
+            ws_stats.cell(row=row_idx, column=col_idx).alignment = Alignment(vertical='center')
+
+    ws_stats['G1'].alignment = center
+    ws_stats['G21'].alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
+
+    # Largeur des colonnes
+    ws_stats.column_dimensions['A'].width = 38
+    ws_stats.column_dimensions['B'].width = 4
+    ws_stats.column_dimensions['C'].width = 4
+    ws_stats.column_dimensions['D'].width = 24
+    ws_stats.column_dimensions['E'].width = 6
+    ws_stats.column_dimensions['F'].width = 6
+    ws_stats.column_dimensions['G'].width = 16
+    ws_stats.column_dimensions['H'].width = 16
+    ws_stats.column_dimensions['I'].width = 16
+
+    # Hauteur des lignes
+    for r in range(1, 25):
+        ws_stats.row_dimensions[r].height = 24
+
+    # Zone commentaires fusionnée
+    ws_stats.merge_cells('G2:I18')
+    ws_stats['G2'] = ''
+    ws_stats['G2'].border = Border(
+        left=Side(style='thin', color='A6A6A6'),
+        right=Side(style='thin', color='A6A6A6'),
+        top=Side(style='thin', color='A6A6A6'),
+        bottom=Side(style='thin', color='A6A6A6')
+    )
+
+    # Bordures légères sur les cellules de valeurs importantes
+    thin_side = Side(style='thin', color='A6A6A6')
+    thin_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+
+    for cell_ref in ['D2', 'D3', 'D6', 'D10', 'D11', 'D12', 'D16', 'D17', 'D20']:
+        ws_stats[cell_ref].border = thin_border
+
+    # Bordure sur la zone des numéros
+    ws_stats['G21'].border = thin_border
     schedule = Schedule.query.get(schedule_id)
     if not schedule:
         return jsonify({'error': 'Schedule not found'}), 404
