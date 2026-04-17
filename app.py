@@ -834,18 +834,7 @@ def export_excel():
     # Bordure sur la zone des numéros
     ws_stats['G21'].border = thin_border
 
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
-
     filename = "Cedule_de_la_journee.xlsx"
-
-    return send_file(
-        output,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=filename
-    )
 
 @app.route('/api/export/<int:schedule_id>', methods=['GET'])
 def export_schedule(schedule_id):    
