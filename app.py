@@ -800,6 +800,8 @@ def export_excel():
     for col in ['J', 'K', 'L', 'M', 'N']:
         ws_stats.column_dimensions[col].width = 10
 
+    filename = "Cedule_de_la_journee.xlsx"
+
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
