@@ -714,7 +714,8 @@ def export_excel():
                     if p:
                         drill_players_set.add(p)
 
-    used_courts.sort()
+    used_courts = sorted(used_courts, key=lambda x: int(x) if str(x).isdigit() else 999)
+    #used_courts.sort()
 
     selected_count = len(selected_players_set)
     drill_count = len(drill_players_set)
