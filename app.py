@@ -398,6 +398,7 @@ def export_excel():
     ws_players = wb.create_sheet('Cédule pour chaque joueur')
     ws_stats = wb.create_sheet('Cédule - Statistiques')
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
+    ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
     left = Alignment(horizontal='left', vertical='center', wrap_text=True)
@@ -873,6 +874,76 @@ def export_excel():
 
     for r in range(3, row_p):
         ws_partners.row_dimensions[r].height = 20
+
+    # ==============================
+    # Feuille : ParrJoueursAdversaires
+    # ==============================
+
+    ws_opponents['A1'] = 'ParrJoueursAdversaires'
+    ws_opponents['A1'].font = Font(bold=True, size=14)
+    ws_opponents['A1'].alignment = center
+
+    headers_opp = ['Joueur', 'Adversaire', 'Nb fois']
+
+    for col_idx, header in enumerate(headers_opp, start=1):
+        cell = ws_opponents.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    # Dictionnaire : (joueur, adversaire) -> nb
+    opponent_counts = {}
+
+    for period in periods:
+        courts = period.get('courts', [])
+
+        for court in courts:
+            side_a = court.get('sideA', {})
+            side_b = court.get('sideB', {})
+
+            a1 = side_a.get('player1', {}).get('fullName', '')
+            a2 = side_a.get('player2', {}).get('fullName', '')
+            b1 = side_b.get('player1', {}).get('fullName', '')
+            b2 = side_b.get('player2', {}).get('fullName', '')
+
+            matchups = [
+                (a1, b1), (a1, b2),
+                (a2, b1), (a2, b2),
+                (b1, a1), (b1, a2),
+                (b2, a1), (b2, a2),
+            ]
+
+            for joueur, adversaire in matchups:
+                if joueur and adversaire:
+                    key = (joueur, adversaire)
+                    opponent_counts[key] = opponent_counts.get(key, 0) + 1
+
+    # Trier par joueur puis adversaire
+    sorted_opponents = sorted(opponent_counts.items(), key=lambda x: (x[0][0], x[0][1]))
+
+    row_o = 3
+    for (joueur, adversaire), count in sorted_opponents:
+        ws_opponents.cell(row=row_o, column=1, value=joueur).alignment = center
+        ws_opponents.cell(row=row_o, column=2, value=adversaire).alignment = center
+        ws_opponents.cell(row=row_o, column=3, value=count).alignment = center
+
+        for c in range(1, 4):
+            ws_opponents.cell(row=row_o, column=c).border = border
+
+        row_o += 1
+
+    # Largeurs colonnes
+    ws_opponents.column_dimensions['A'].width = 30
+    ws_opponents.column_dimensions['B'].width = 30
+    ws_opponents.column_dimensions['C'].width = 10
+
+    # Hauteur lignes
+    ws_opponents.row_dimensions[1].height = 24
+    ws_opponents.row_dimensions[2].height = 22
+
+    for r in range(3, row_o):
+        ws_opponents.row_dimensions[r].height = 20
 
     output = io.BytesIO()
     wb.save(output)
