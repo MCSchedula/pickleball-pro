@@ -399,6 +399,7 @@ def export_excel():
     ws_stats = wb.create_sheet('Cédule - Statistiques')
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
+    ws_mixed = wb.create_sheet('Double Mixtes')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
     left = Alignment(horizontal='left', vertical='center', wrap_text=True)
@@ -944,6 +945,90 @@ def export_excel():
 
     for r in range(3, row_o):
         ws_opponents.row_dimensions[r].height = 20
+
+    # ==============================
+    # Feuille : Double Mixtes
+    # ==============================
+
+    ws_mixed['A1'] = 'Double Mixtes'
+    ws_mixed['A1'].font = Font(bold=True, size=14)
+    ws_mixed['A1'].alignment = center
+
+    headers = [
+        'Période',
+        'Heure',
+        'Terrain',
+        'Équipe A',
+        'Mixte A',
+        'Équipe B',
+        'Mixte B'
+    ]
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws_mixed.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    row_m = 3
+
+    for period in periods:
+        period_name = period.get('name', '')
+        period_time = period.get('time', '')
+        courts = period.get('courts', [])
+
+        for court in courts:
+            terrain = court.get('number', '')
+
+            side_a = court.get('sideA', {})
+            side_b = court.get('sideB', {})
+
+            a1 = side_a.get('player1', {})
+            a2 = side_a.get('player2', {})
+            b1 = side_b.get('player1', {})
+            b2 = side_b.get('player2', {})
+
+            # Noms
+            team_a = f"{a1.get('fullName', '')} / {a2.get('fullName', '')}"
+            team_b = f"{b1.get('fullName', '')} / {b2.get('fullName', '')}"
+
+            # Mixte
+            mix_a = 'Oui' if a1.get('gender') != a2.get('gender') else 'Non'
+            mix_b = 'Oui' if b1.get('gender') != b2.get('gender') else 'Non'
+
+            values = [
+                period_name,
+                period_time,
+                terrain,
+                team_a,
+                mix_a,
+                team_b,
+                mix_b
+            ]
+
+            for col_idx, value in enumerate(values, start=1):
+                cell = ws_mixed.cell(row=row_m, column=col_idx, value=value)
+                cell.alignment = center
+                cell.border = border
+
+            row_m += 1
+
+    # Largeurs colonnes
+    ws_mixed.column_dimensions['A'].width = 18
+    ws_mixed.column_dimensions['B'].width = 12
+    ws_mixed.column_dimensions['C'].width = 10
+    ws_mixed.column_dimensions['D'].width = 32
+    ws_mixed.column_dimensions['E'].width = 10
+    ws_mixed.column_dimensions['F'].width = 32
+    ws_mixed.column_dimensions['G'].width = 10
+
+    # Hauteur lignes
+    ws_mixed.row_dimensions[1].height = 24
+    ws_mixed.row_dimensions[2].height = 22
+
+    for r in range(3, row_m):
+        ws_mixed.row_dimensions[r].height = 20
 
     output = io.BytesIO()
     wb.save(output)
