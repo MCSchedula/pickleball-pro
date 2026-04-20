@@ -397,6 +397,7 @@ def export_excel():
     ws.title = 'Cédule de la journée'
     ws_players = wb.create_sheet('Cédule pour chaque joueur')
     ws_stats = wb.create_sheet('Cédule - Statistiques')
+    ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
     left = Alignment(horizontal='left', vertical='center', wrap_text=True)
@@ -802,6 +803,76 @@ def export_excel():
         ws_stats.column_dimensions[col].width = 10
 
     filename = "Cedule_de_la_journee.xlsx"
+
+    # ==============================
+    # Feuille : ParrJoueursCoéquipiers
+    # ==============================
+
+    ws_partners['A1'] = 'ParrJoueursCoéquipiers'
+    ws_partners['A1'].font = Font(bold=True, size=14)
+    ws_partners['A1'].alignment = center
+
+    headers = ['Joueur', 'Partenaire', 'Nb fois']
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws_partners.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    # Dictionnaire : (joueur, partenaire) → nb
+    partner_counts = {}
+
+    for period in periods:
+        courts = period.get('courts', [])
+
+        for court in courts:
+            side_a = court.get('sideA', {})
+            side_b = court.get('sideB', {})
+
+            a1 = side_a.get('player1', {}).get('fullName', '')
+            a2 = side_a.get('player2', {}).get('fullName', '')
+            b1 = side_b.get('player1', {}).get('fullName', '')
+            b2 = side_b.get('player2', {}).get('fullName', '')
+
+            pairs = [
+                (a1, a2),
+                (a2, a1),
+                (b1, b2),
+                (b2, b1)
+            ]
+
+            for joueur, partenaire in pairs:
+                if joueur and partenaire:
+                    key = (joueur, partenaire)
+                    partner_counts[key] = partner_counts.get(key, 0) + 1
+
+    # Trier par joueur puis partenaire
+    sorted_pairs = sorted(partner_counts.items(), key=lambda x: (x[0][0], x[0][1]))
+
+    row_p = 3
+    for (joueur, partenaire), count in sorted_pairs:
+        ws_partners.cell(row=row_p, column=1, value=joueur).alignment = center
+        ws_partners.cell(row=row_p, column=2, value=partenaire).alignment = center
+        ws_partners.cell(row=row_p, column=3, value=count).alignment = center
+
+        for c in range(1, 4):
+            ws_partners.cell(row=row_p, column=c).border = border
+
+        row_p += 1
+
+    # Largeurs colonnes
+    ws_partners.column_dimensions['A'].width = 30
+    ws_partners.column_dimensions['B'].width = 30
+    ws_partners.column_dimensions['C'].width = 10
+
+    # Hauteur lignes
+    ws_partners.row_dimensions[1].height = 24
+    ws_partners.row_dimensions[2].height = 22
+
+    for r in range(3, row_p):
+        ws_partners.row_dimensions[r].height = 20
 
     output = io.BytesIO()
     wb.save(output)
