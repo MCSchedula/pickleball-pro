@@ -399,6 +399,17 @@ def export_excel():
     ws_stats = wb.create_sheet('Cédule - Statistiques')
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
+
+    # Dictionnaire nom complet -> genre
+    player_gender_map = {}
+
+    for player in Player.query.all():
+        full_name = str(player.full_name).strip() if player.full_name else ''
+        gender = str(player.gender).strip().upper() if player.gender else ''
+
+    if full_name:
+        player_gender_map[full_name] = gender
+
     ws_mixed = wb.create_sheet('Double Mixtes')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
@@ -946,6 +957,16 @@ def export_excel():
     for r in range(3, row_o):
         ws_opponents.row_dimensions[r].height = 20
 
+    # Dictionnaire nom complet -> genre
+    player_gender_map = {}
+
+    for player in Player.query.all():
+        full_name = str(player.full_name).strip() if player.full_name else ''
+        gender = str(player.gender).strip().upper() if player.gender else ''
+
+        if full_name:
+            player_gender_map[full_name] = gender
+
     # ==============================
     # Feuille : Double Mixtes
     # ==============================
@@ -994,8 +1015,13 @@ def export_excel():
             team_b = f"{b1.get('fullName', '')} / {b2.get('fullName', '')}"
 
             # Mixte
-            mix_a = 'Oui' if a1.get('gender') != a2.get('gender') else 'Non'
-            mix_b = 'Oui' if b1.get('gender') != b2.get('gender') else 'Non'
+            gender_a1 = player_gender_map.get(a1.get('fullName', ''), '')
+            gender_a2 = player_gender_map.get(a2.get('fullName', ''), '')
+            gender_b1 = player_gender_map.get(b1.get('fullName', ''), '')
+            gender_b2 = player_gender_map.get(b2.get('fullName', ''), '')
+
+            mix_a = 'Oui' if gender_a1 and gender_a2 and gender_a1 != gender_a2 else 'Non'
+            mix_b = 'Oui' if gender_b1 and gender_b2 and gender_b1 != gender_b2 else 'Non'
 
             values = [
                 period_name,
