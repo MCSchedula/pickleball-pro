@@ -164,6 +164,11 @@ def upload_excel():
 
     result = {'players': 0, 'events': 0, 'selected': 0, 'drill': 0}
 
+    def normalize_name(value):
+        if not value:
+            return ''
+        return ' '.join(str(value).strip().upper().split())
+
     # Import players from "Noms", "Sélection joueurs" or "Membres"
     sheet_name = None
     if 'Noms' in wb.sheetnames:
@@ -172,6 +177,66 @@ def upload_excel():
         sheet_name = 'Sélection joueurs'
     elif 'Membres' in wb.sheetnames:
         sheet_name = 'Membres'
+
+    # Lire la feuille Membres pour récupérer les informations complètes (genre, niveau, etc.)
+    members_map = {}
+
+    if 'Membres' in wb.sheetnames:
+        ws_members = wb['Membres']
+        member_headers = [str(cell.value).strip() if cell.value else '' for cell in ws_members[1]]
+
+        for row in ws_members.iter_rows(min_row=2, values_only=True):
+            full_name = ''
+            first_name = ''
+            last_name = ''
+            gender = 'M'
+            level = 3.5
+            email = ''
+            status = 'Actif'
+
+            if '(F) Nom complet' in member_headers:
+                idx = member_headers.index('(F) Nom complet')
+                full_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+            elif 'Nom complet' in member_headers:
+                idx = member_headers.index('Nom complet')
+                full_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+
+            if 'Prénom' in member_headers:
+                idx = member_headers.index('Prénom')
+                first_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+
+            if 'Nom' in member_headers:
+                idx = member_headers.index('Nom')
+                last_name = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+
+            if 'Genre' in member_headers:
+                idx = member_headers.index('Genre')
+                gender = str(row[idx]).strip().upper() if len(row) > idx and row[idx] else 'M'
+
+            if 'Niveau' in member_headers:
+                idx = member_headers.index('Niveau')
+                try:
+                    level = float(row[idx]) if len(row) > idx and row[idx] not in (None, '') else 3.5
+                except:
+                    level = 3.5
+
+            if 'Courriel' in member_headers:
+                idx = member_headers.index('Courriel')
+                email = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
+
+            if 'Statut' in member_headers:
+                idx = member_headers.index('Statut')
+                status = str(row[idx]).strip() if len(row) > idx and row[idx] else 'Actif'
+
+            if full_name:
+                members_map[normalize_name(full_name)] = {
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'gender': gender,
+                    'level': level,
+                    'email': email,
+                    'status': status
+                }
 
     if sheet_name:
         ws = wb[sheet_name]
@@ -208,28 +273,18 @@ def upload_excel():
             if not full_name:
                 continue
 
-            gender = 'M'
-            if 'Genre' in headers:
-                idx = headers.index('Genre')
-                gender = str(row[idx]).strip() if len(row) > idx and row[idx] else 'M'
+            # récupération depuis Membres
+            member_info = members_map.get(normalize_name(full_name), {})
 
-            level = 3.5
-            if 'Niveau' in headers:
-                idx = headers.index('Niveau')
-                try:
-                    level = float(row[idx]) if len(row) > idx and row[idx] not in (None, '') else 3.5
-                except:
-                    level = 3.5
+            if not member_info:
+                print("AUCUN MATCH MEMBRES POUR:", full_name)
 
-            email = ''
-            if 'Courriel' in headers:
-                idx = headers.index('Courriel')
-                email = str(row[idx]).strip() if len(row) > idx and row[idx] else ''
-
-            status = 'Actif'
-            if 'Statut' in headers:
-                idx = headers.index('Statut')
-                status = str(row[idx]).strip() if len(row) > idx and row[idx] else 'Actif'
+            first_name = member_info.get('first_name', first_name)
+            last_name = member_info.get('last_name', last_name)
+            gender = member_info.get('gender', 'M')
+            level = member_info.get('level', 3.5)
+            email = member_info.get('email', '')
+            status = member_info.get('status', 'Actif')
 
             selected = False
             if 'Sélectionner (x)' in headers:
