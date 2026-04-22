@@ -447,6 +447,11 @@ def export_excel():
     event = schedule.get('event', {})
     periods = schedule.get('periods', [])
 
+    def normalize_name(value):
+        if not value:
+            return ''
+        return ' '.join(str(value).strip().upper().split())
+
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Cédule de la journée'
@@ -458,12 +463,14 @@ def export_excel():
     # Dictionnaire nom complet -> genre
     player_gender_map = {}
 
+    player_gender_map = {}
+
     for player in Player.query.all():
-        full_name = str(player.full_name).strip() if player.full_name else ''
+        full_name = normalize_name(player.full_name)
         gender = str(player.gender).strip().upper() if player.gender else ''
 
-    if full_name:
-        player_gender_map[full_name] = gender
+        if full_name:
+            player_gender_map[full_name] = gender
 
     ws_mixed = wb.create_sheet('Double Mixtes')
 
@@ -1070,11 +1077,13 @@ def export_excel():
             team_b = f"{b1.get('fullName', '')} / {b2.get('fullName', '')}"
 
             # Mixte
-            gender_a1 = player_gender_map.get(a1.get('fullName', ''), '')
-            gender_a2 = player_gender_map.get(a2.get('fullName', ''), '')
-            gender_b1 = player_gender_map.get(b1.get('fullName', ''), '')
-            gender_b2 = player_gender_map.get(b2.get('fullName', ''), '')
+            gender_a1 = player_gender_map.get(normalize_name(a1.get('fullName', '')), '')
+            gender_a2 = player_gender_map.get(normalize_name(a2.get('fullName', '')), '')
+            gender_b1 = player_gender_map.get(normalize_name(b1.get('fullName', '')), '')
+            gender_b2 = player_gender_map.get(normalize_name(b2.get('fullName', '')), '')
 
+            print("MIX DEBUG A:", a1.get('fullName', ''), gender_a1, "|", a2.get('fullName', ''), gender_a2)
+            print("MIX DEBUG B:", b1.get('fullName', ''), gender_b1, "|", b2.get('fullName', ''), gender_b2)
             mix_a = 'Oui' if gender_a1 and gender_a2 and gender_a1 != gender_a2 else 'Non'
             mix_b = 'Oui' if gender_b1 and gender_b2 and gender_b1 != gender_b2 else 'Non'
 
