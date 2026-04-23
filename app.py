@@ -250,18 +250,19 @@ def upload_excel():
                     'status': status
                 }
 
-            # Si le fichier uploadé ne contient pas Membres,
-            # récupérer les genres déjà connus dans la base
-            if not members_map:
-                for player in Player.query.all():
-                    members_map[normalize_name(player.full_name)] = {
-                        'first_name': player.first_name,
-                        'last_name': player.last_name,
-                        'gender': player.gender,
-                        'level': player.level,
-                        'email': player.email,
-                        'status': player.status
-                    }
+    # Si le fichier uploadé ne contient pas Membres,
+    # récupérer les genres déjà connus dans la base
+    if not members_map:
+        for player in Player.query.all():
+            members_map[normalize_name(player.full_name)] = {
+                'first_name': player.first_name,
+                'last_name': player.last_name,
+                'gender': player.gender,
+                'level': player.level,
+                'email': player.email,
+                'status': player.status
+            }
+            
     if sheet_name:
         ws = wb[sheet_name]
         headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
