@@ -17,6 +17,18 @@ app.config['SECRET_KEY'] = 'pickleball-dsp-secret-key-2026'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+import unicodedata
+
+def normalize_name(value):
+    if not value:
+        return ''
+    text = str(value).strip().upper()
+    text = ''.join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    )
+    return ' '.join(text.split())
+
 # ==================== MODELS ====================
 
 class Player(db.Model):
@@ -308,6 +320,8 @@ def upload_excel():
                 drill=drill
             )
 
+            print("IMPORT PLAYER:", full_name, "-> gender =", gender)
+
             db.session.add(player)
             result['players'] += 1
 
@@ -463,14 +477,15 @@ def export_excel():
     # Dictionnaire nom complet -> genre
     player_gender_map = {}
 
-    player_gender_map = {}
-
     for player in Player.query.all():
         full_name = normalize_name(player.full_name)
         gender = str(player.gender).strip().upper() if player.gender else ''
 
         if full_name:
             player_gender_map[full_name] = gender
+
+    print("NB JOUEURS DANS player_gender_map:", len(player_gender_map))
+    print("SAMPLE player_gender_map:", list(player_gender_map.items())[:20])
 
     ws_mixed = wb.create_sheet('Double Mixtes')
 
