@@ -486,6 +486,7 @@ def export_excel():
 
     print("NB JOUEURS DANS player_gender_map:", len(player_gender_map))
     print("SAMPLE player_gender_map:", list(player_gender_map.items())[:20])
+    print("SAMPLE GENDERS:", list(player_gender_map.items())[:20])
 
     ws_mixed = wb.create_sheet('Double Mixtes')
 
