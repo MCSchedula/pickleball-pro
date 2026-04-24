@@ -265,7 +265,7 @@ def upload_excel():
 
     print("NB membres_map après fallback:", len(members_map))
     print("EXEMPLES membres_map:", list(members_map.keys())[:10])
-                
+
     if sheet_name:
         ws = wb[sheet_name]
         headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
@@ -303,6 +303,7 @@ def upload_excel():
 
             # récupération depuis Membres
             member_info = members_map.get(normalize_name(full_name), {})
+            print("CHECK MATCH:", full_name, "=>", normalize_name(full_name), "FOUND =", bool(member_info), "GENDER =", member_info.get('gender'))
 
             if not member_info:
                 print("AUCUN MATCH MEMBRES POUR:", full_name)
