@@ -509,9 +509,11 @@ def export_excel():
             player_gender_map.get(normalize_name(nom_test))
         )
 
-    for player in Player.query.all():
-        full_name = normalize_name(player.full_name)
-        gender = str(player.gender).strip().upper() if player.gender else ''
+    player_gender_map = {}
+
+    for p in schedule.get('players', []):
+        full_name = normalize_name(p.get('fullName', ''))
+        gender = str(p.get('gender', '')).strip().upper()
 
         if full_name:
             player_gender_map[full_name] = gender
