@@ -494,6 +494,21 @@ def export_excel():
     # Dictionnaire nom complet -> genre
     player_gender_map = {}
 
+    for nom_test in [
+        'Estelle Pimparé',
+        'François Bissonnette',
+        'Hélène Cournoyer',
+        'Julie Laganiere',
+        'Luc Boulianne'
+    ]:
+        print(
+            "EXPORT GENDER CHECK:",
+            nom_test,
+            "=>",
+            normalize_name(nom_test),
+            player_gender_map.get(normalize_name(nom_test))
+        )
+
     for player in Player.query.all():
         full_name = normalize_name(player.full_name)
         gender = str(player.gender).strip().upper() if player.gender else ''
