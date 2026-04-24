@@ -262,7 +262,10 @@ def upload_excel():
                 'email': player.email,
                 'status': player.status
             }
-            
+
+    print("NB membres_map après fallback:", len(members_map))
+    print("EXEMPLES membres_map:", list(members_map.keys())[:10])
+                
     if sheet_name:
         ws = wb[sheet_name]
         headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
