@@ -455,7 +455,10 @@ def generate_schedule():
     
     # Generate schedule using algorithm
     schedule_result = generate_schedule_algorithm(event.to_dict(), selected_players, drill_players, settings)
-    
+
+    # Ajoute les joueurs avec leur genre pour l'export Excel
+    schedule_result['players'] = selected_players
+        
     # Save to database
     schedule = Schedule(
         event_id=event_id,
@@ -465,9 +468,6 @@ def generate_schedule():
     )
     db.session.add(schedule)
     db.session.commit()
-
-    schedule = generate_schedule_algorithm(event, selected_players, drill_players, settings)
-    schedule['players'] = selected_players
 
     return jsonify(schedule_result)
 
