@@ -22,11 +22,14 @@ import unicodedata
 def normalize_name(value):
     if not value:
         return ''
+    
     text = str(value).strip().upper()
-    text = ''.join(
-        c for c in unicodedata.normalize('NFD', text)
-        if unicodedata.category(c) != 'Mn'
-    )
+    
+    # 🔥 Supprime les accents correctement
+    text = unicodedata.normalize('NFKD', text)
+    text = ''.join(c for c in text if not unicodedata.combining(c))
+    
+    # Nettoyage des espaces
     return ' '.join(text.split())
 
 # ==================== MODELS ====================
@@ -506,7 +509,7 @@ def export_excel():
 
     print("EXPORT players count:", len(schedule.get('players', [])))
     print("EXPORT gender sample:", list(player_gender_map.items())[:20])
-    
+
     ws_mixed = wb.create_sheet('Double Mixtes')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
