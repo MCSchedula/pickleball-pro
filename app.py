@@ -458,7 +458,7 @@ def generate_schedule():
 
     # Ajoute les joueurs avec leur genre pour l'export Excel
     schedule_result['players'] = selected_players
-        
+
     # Save to database
     schedule = Schedule(
         event_id=event_id,
@@ -496,6 +496,9 @@ def export_excel():
 
     # Dictionnaire nom complet -> genre
     player_gender_map = {}
+
+    print("EXPORT players count:", len(schedule.get('players', [])))
+    print("EXPORT gender sample:", list(player_gender_map.items())[:20])
 
     for nom_test in [
         'Estelle Pimparé',
