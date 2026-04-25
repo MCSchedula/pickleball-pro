@@ -498,10 +498,6 @@ def export_excel():
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
 
     print("TEST NORMALIZE:", normalize_name("Estelle Pimparé"))
-    print("MAP HAS ESTELLE:", player_gender_map.get(normalize_name("Estelle Pimparé")))
-    print("EXPORT gender sample:", list(player_gender_map.items())[:10])
-    print("EXPORT players count:", len(schedule.get('players', [])))
-    print("EXPORT gender sample:", list(player_gender_map.items())[:20])
 
     ws_mixed = wb.create_sheet('Double Mixtes')
 
