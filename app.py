@@ -507,6 +507,9 @@ def export_excel():
         if full_name and gender:
             player_gender_map[full_name] = gender
 
+    print("TEST NORMALIZE:", normalize_name("Estelle Pimparé"))
+    print("MAP HAS ESTELLE:", player_gender_map.get(normalize_name("Estelle Pimparé")))
+    print("EXPORT gender sample:", list(player_gender_map.items())[:10])
     print("EXPORT players count:", len(schedule.get('players', [])))
     print("EXPORT gender sample:", list(player_gender_map.items())[:20])
 
@@ -1122,6 +1125,12 @@ def export_excel():
 
             print("MIX DEBUG A:", a1.get('fullName', ''), gender_a1, "|", a2.get('fullName', ''), gender_a2)
             print("MIX DEBUG B:", b1.get('fullName', ''), gender_b1, "|", b2.get('fullName', ''), gender_b2)
+
+            print("LOOKUP A1:", a1.get('fullName', ''), "=>", normalize_name(a1.get('fullName', '')), "=>", gender_a1)
+            print("LOOKUP A2:", a2.get('fullName', ''), "=>", normalize_name(a2.get('fullName', '')), "=>", gender_a2)
+            print("LOOKUP B1:", b1.get('fullName', ''), "=>", normalize_name(b1.get('fullName', '')), "=>", gender_b1)
+            print("LOOKUP B2:", b2.get('fullName', ''), "=>", normalize_name(b2.get('fullName', '')), "=>", gender_b2)
+
             mix_a = 'Oui' if gender_a1 and gender_a2 and gender_a1 != gender_a2 else 'Non'
             mix_b = 'Oui' if gender_b1 and gender_b2 and gender_b1 != gender_b2 else 'Non'
 
