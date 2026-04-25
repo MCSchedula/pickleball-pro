@@ -432,8 +432,6 @@ def upload_excel():
 
         db.session.commit()
 
-    schedule = generate_schedule_algorithm(event, selected_players, drill_players, settings)
-    schedule['players'] = selected_players
     return jsonify(result)
 
 @app.route('/api/generate', methods=['POST'])
@@ -467,7 +465,10 @@ def generate_schedule():
     )
     db.session.add(schedule)
     db.session.commit()
-    
+
+    schedule = generate_schedule_algorithm(event, selected_players, drill_players, settings)
+    schedule['players'] = selected_players
+
     return jsonify(schedule_result)
 
 @app.route('/api/export-excel', methods=['POST'])
