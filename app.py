@@ -497,16 +497,6 @@ def export_excel():
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
 
-    # Dictionnaire nom complet -> genre
-    player_gender_map = {}
-
-    for p in schedule.get('players', []):
-        full_name = normalize_name(p.get('fullName', ''))
-        gender = str(p.get('gender', '')).strip().upper()
-
-        if full_name and gender:
-            player_gender_map[full_name] = gender
-
     print("TEST NORMALIZE:", normalize_name("Estelle Pimparé"))
     print("MAP HAS ESTELLE:", player_gender_map.get(normalize_name("Estelle Pimparé")))
     print("EXPORT gender sample:", list(player_gender_map.items())[:10])
@@ -1063,11 +1053,11 @@ def export_excel():
     # Dictionnaire nom complet -> genre
     player_gender_map = {}
 
-    for player in Player.query.all():
-        full_name = str(player.full_name).strip() if player.full_name else ''
-        gender = str(player.gender).strip().upper() if player.gender else ''
+    for p in schedule.get('players', []):
+        full_name = normalize_name(p.get('fullName', ''))
+        gender = str(p.get('gender', '')).strip().upper()
 
-        if full_name:
+        if full_name and gender:
             player_gender_map[full_name] = gender
 
     # ==============================
