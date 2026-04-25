@@ -497,37 +497,16 @@ def export_excel():
     # Dictionnaire nom complet -> genre
     player_gender_map = {}
 
-    print("EXPORT players count:", len(schedule.get('players', [])))
-    print("EXPORT gender sample:", list(player_gender_map.items())[:20])
-
-    for nom_test in [
-        'Estelle Pimparé',
-        'François Bissonnette',
-        'Hélène Cournoyer',
-        'Julie Laganiere',
-        'Luc Boulianne'
-    ]:
-        print(
-            "EXPORT GENDER CHECK:",
-            nom_test,
-            "=>",
-            normalize_name(nom_test),
-            player_gender_map.get(normalize_name(nom_test))
-        )
-
-    player_gender_map = {}
-
     for p in schedule.get('players', []):
         full_name = normalize_name(p.get('fullName', ''))
         gender = str(p.get('gender', '')).strip().upper()
 
-        if full_name:
+        if full_name and gender:
             player_gender_map[full_name] = gender
 
-    print("NB JOUEURS DANS player_gender_map:", len(player_gender_map))
-    print("SAMPLE player_gender_map:", list(player_gender_map.items())[:20])
-    print("SAMPLE GENDERS:", list(player_gender_map.items())[:20])
-
+    print("EXPORT players count:", len(schedule.get('players', [])))
+    print("EXPORT gender sample:", list(player_gender_map.items())[:20])
+    
     ws_mixed = wb.create_sheet('Double Mixtes')
 
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
