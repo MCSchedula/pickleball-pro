@@ -266,13 +266,9 @@ def upload_excel():
                 'status': player.status
             }
 
-    print("NB membres_map après fallback:", len(members_map))
-    print("EXEMPLES membres_map:", list(members_map.keys())[:10])
-
     if sheet_name:
         ws = wb[sheet_name]
         headers = [str(cell.value).strip() if cell.value else '' for cell in ws[1]]
-        print("HEADERS:", headers)
 
         Player.query.delete()
 
@@ -306,7 +302,6 @@ def upload_excel():
 
             # récupération depuis Membres
             member_info = members_map.get(normalize_name(full_name), {})
-            print("CHECK MATCH:", full_name, "=>", normalize_name(full_name), "FOUND =", bool(member_info), "GENDER =", member_info.get('gender'))
 
             if not member_info:
                 print("AUCUN MATCH MEMBRES POUR:", full_name)
@@ -339,8 +334,6 @@ def upload_excel():
                 selected=selected,
                 drill=drill
             )
-
-            print("IMPORT PLAYER:", full_name, "-> gender =", gender)
 
             db.session.add(player)
             result['players'] += 1
@@ -496,8 +489,7 @@ def export_excel():
     ws_stats = wb.create_sheet('Cédule - Statistiques')
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
-
-    print("TEST NORMALIZE:", normalize_name("Estelle Pimparé"))
+    ws_day_v2 = wb.create_sheet('Cédule de la journée (V2)')
 
     ws_mixed = wb.create_sheet('Double Mixtes')
 
@@ -1109,14 +1101,6 @@ def export_excel():
             gender_b1 = player_gender_map.get(normalize_name(b1.get('fullName', '')), '')
             gender_b2 = player_gender_map.get(normalize_name(b2.get('fullName', '')), '')
 
-            print("MIX DEBUG A:", a1.get('fullName', ''), gender_a1, "|", a2.get('fullName', ''), gender_a2)
-            print("MIX DEBUG B:", b1.get('fullName', ''), gender_b1, "|", b2.get('fullName', ''), gender_b2)
-
-            print("LOOKUP A1:", a1.get('fullName', ''), "=>", normalize_name(a1.get('fullName', '')), "=>", gender_a1)
-            print("LOOKUP A2:", a2.get('fullName', ''), "=>", normalize_name(a2.get('fullName', '')), "=>", gender_a2)
-            print("LOOKUP B1:", b1.get('fullName', ''), "=>", normalize_name(b1.get('fullName', '')), "=>", gender_b1)
-            print("LOOKUP B2:", b2.get('fullName', ''), "=>", normalize_name(b2.get('fullName', '')), "=>", gender_b2)
-
             mix_a = 'Oui' if gender_a1 and gender_a2 and gender_a1 != gender_a2 else 'Non'
             mix_b = 'Oui' if gender_b1 and gender_b2 and gender_b1 != gender_b2 else 'Non'
 
@@ -1152,6 +1136,77 @@ def export_excel():
 
     for r in range(3, row_m):
         ws_mixed.row_dimensions[r].height = 20
+
+    # ==============================
+    # Feuille : Cédule de la journée (V2)
+    # ==============================
+
+    ws_day_v2['A1'] = 'Cédule de la journée (V2)'
+    ws_day_v2['A1'].font = Font(bold=True, size=14)
+    ws_day_v2['A1'].alignment = center
+
+    headers_v2 = [
+        'Période',
+        'Heure',
+        'Terrain',
+        'Équipe A',
+        'Équipe B'
+    ]
+
+    for col_idx, header in enumerate(headers_v2, start=1):
+        cell = ws_day_v2.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    row_v2 = 3
+
+    for period in periods:
+        period_name = period.get('name', '')
+        period_time = period.get('time', '')
+        courts = period.get('courts', [])
+
+        for court in courts:
+            terrain = court.get('number', '')
+
+            side_a = court.get('sideA', {})
+            side_b = court.get('sideB', {})
+
+            a1 = side_a.get('player1', {}).get('fullName', '')
+            a2 = side_a.get('player2', {}).get('fullName', '')
+            b1 = side_b.get('player1', {}).get('fullName', '')
+            b2 = side_b.get('player2', {}).get('fullName', '')
+
+            team_a = f"{a1} / {a2}"
+            team_b = f"{b1} / {b2}"
+
+            values = [
+                period_name,
+                period_time,
+                terrain,
+                team_a,
+                team_b
+            ]
+
+            for col_idx, value in enumerate(values, start=1):
+                cell = ws_day_v2.cell(row=row_v2, column=col_idx, value=value)
+                cell.alignment = center
+                cell.border = border
+
+            row_v2 += 1
+
+    ws_day_v2.column_dimensions['A'].width = 18
+    ws_day_v2.column_dimensions['B'].width = 12
+    ws_day_v2.column_dimensions['C'].width = 10
+    ws_day_v2.column_dimensions['D'].width = 36
+    ws_day_v2.column_dimensions['E'].width = 36
+
+    ws_day_v2.row_dimensions[1].height = 24
+    ws_day_v2.row_dimensions[2].height = 22
+
+    for r in range(3, row_v2):
+        ws_day_v2.row_dimensions[r].height = 22
 
     output = io.BytesIO()
     wb.save(output)
