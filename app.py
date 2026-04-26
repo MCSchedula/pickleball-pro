@@ -1238,7 +1238,8 @@ def export_excel():
         'Côté A',
         'Côté B',
         'Doubles mixtes',
-        'Drill'
+        'Drill',
+        'Score équité'
     ]
 
     for col_idx, header in enumerate(headers, start=1):
@@ -1318,7 +1319,8 @@ def export_excel():
             s['sideA'],
             s['sideB'],
             s['mixed'],
-            s['drill']
+            s['drill'],
+            score
         ]
 
         for col_idx, value in enumerate(values, start=1):
@@ -1328,9 +1330,21 @@ def export_excel():
 
         row += 1
 
+    # 🎨 Coloration du score d'équité
+    for r in range(3, row):
+        score_cell = ws_stats_adv.cell(row=r, column=9)
+
+        if score_cell.value is not None:
+            if score_cell.value < 6:
+                score_cell.fill = PatternFill(fill_type='solid', fgColor='FFC7CE')  # rouge
+            elif score_cell.value < 10:
+                score_cell.fill = PatternFill(fill_type='solid', fgColor='FFEB9C')  # jaune
+            else:
+                score_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')  # vert
+
     # Largeurs
     ws_stats_adv.column_dimensions['A'].width = 28
-    for col in ['B','C','D','E','F','G','H']:
+    for col in ['B','C','D','E','F','G','H','I']:
         ws_stats_adv.column_dimensions[col].width = 18
 
     ws_stats_adv.freeze_panes = 'A3'
