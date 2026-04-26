@@ -1142,16 +1142,12 @@ def export_excel():
     # ==============================
 
     ws_day_v2['A1'] = 'Cédule de la journée (V2)'
+    ws_day_v2.merge_cells('A1:E1')
     ws_day_v2['A1'].font = Font(bold=True, size=14)
     ws_day_v2['A1'].alignment = center
+    ws_day_v2['A1'].fill = grey_fill
 
-    headers_v2 = [
-        'Période',
-        'Heure',
-        'Terrain',
-        'Équipe A',
-        'Équipe B'
-    ]
+    headers_v2 = ['Période', 'Heure', 'Terrain', 'Équipe A', 'Équipe B']
 
     for col_idx, header in enumerate(headers_v2, start=1):
         cell = ws_day_v2.cell(row=2, column=col_idx, value=header)
@@ -1161,11 +1157,23 @@ def export_excel():
         cell.border = border
 
     row_v2 = 3
+    current_period = None
 
     for period in periods:
         period_name = period.get('name', '')
         period_time = period.get('time', '')
         courts = period.get('courts', [])
+
+        # Ligne séparatrice de période
+        if period_name != current_period:
+            ws_day_v2.merge_cells(start_row=row_v2, start_column=1, end_row=row_v2, end_column=5)
+            pcell = ws_day_v2.cell(row=row_v2, column=1, value=f"{period_name} — {period_time}")
+            pcell.font = Font(bold=True)
+            pcell.alignment = center
+            pcell.fill = light_fill
+            pcell.border = border
+            row_v2 += 1
+            current_period = period_name
 
         for court in courts:
             terrain = court.get('number', '')
@@ -1181,13 +1189,7 @@ def export_excel():
             team_a = f"{a1} / {a2}"
             team_b = f"{b1} / {b2}"
 
-            values = [
-                period_name,
-                period_time,
-                terrain,
-                team_a,
-                team_b
-            ]
+            values = [period_name, period_time, terrain, team_a, team_b]
 
             for col_idx, value in enumerate(values, start=1):
                 cell = ws_day_v2.cell(row=row_v2, column=col_idx, value=value)
@@ -1196,17 +1198,22 @@ def export_excel():
 
             row_v2 += 1
 
+    # Largeurs colonnes
     ws_day_v2.column_dimensions['A'].width = 18
     ws_day_v2.column_dimensions['B'].width = 12
     ws_day_v2.column_dimensions['C'].width = 10
-    ws_day_v2.column_dimensions['D'].width = 36
-    ws_day_v2.column_dimensions['E'].width = 36
+    ws_day_v2.column_dimensions['D'].width = 38
+    ws_day_v2.column_dimensions['E'].width = 38
 
-    ws_day_v2.row_dimensions[1].height = 24
+    # Hauteurs
+    ws_day_v2.row_dimensions[1].height = 26
     ws_day_v2.row_dimensions[2].height = 22
 
     for r in range(3, row_v2):
         ws_day_v2.row_dimensions[r].height = 22
+
+    # Gel de l’en-tête
+    ws_day_v2.freeze_panes = 'A3'
 
     output = io.BytesIO()
     wb.save(output)
