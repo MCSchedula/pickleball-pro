@@ -1137,83 +1137,86 @@ def export_excel():
     for r in range(3, row_m):
         ws_mixed.row_dimensions[r].height = 20
 
+
     # ==============================
-    # Feuille : Cédule de la journée (V2)
+    # Feuille : Cédule de la journée (V2) - Grille horaire
     # ==============================
 
     ws_day_v2['A1'] = 'Cédule de la journée (V2)'
-    ws_day_v2.merge_cells('A1:E1')
+    ws_day_v2.merge_cells(start_row=1, start_column=1, end_row=1, end_column=1 + len(periods))
     ws_day_v2['A1'].font = Font(bold=True, size=14)
     ws_day_v2['A1'].alignment = center
     ws_day_v2['A1'].fill = grey_fill
 
-    headers_v2 = ['Période', 'Heure', 'Terrain', 'Équipe A', 'Équipe B']
+    # Ligne 2 : heures
+    ws_day_v2.cell(row=2, column=1, value='Terrain')
+    ws_day_v2.cell(row=2, column=1).font = bold
+    ws_day_v2.cell(row=2, column=1).alignment = center
+    ws_day_v2.cell(row=2, column=1).fill = grey_fill
+    ws_day_v2.cell(row=2, column=1).border = border
 
-    for col_idx, header in enumerate(headers_v2, start=1):
-        cell = ws_day_v2.cell(row=2, column=col_idx, value=header)
+    for idx, period in enumerate(periods, start=2):
+        cell = ws_day_v2.cell(row=2, column=idx, value=period.get('time', ''))
         cell.font = bold
         cell.alignment = center
         cell.fill = grey_fill
         cell.border = border
 
+    # Nombre maximal de terrains
+    max_courts = max(len(period.get('courts', [])) for period in periods) if periods else 0
+
+    terrain_numbers = [3, 4, 5, 6, 7, 8, 10, 11, 12, 99]
+
     row_v2 = 3
-    current_period = None
 
-    for period in periods:
-        period_name = period.get('name', '')
-        period_time = period.get('time', '')
-        courts = period.get('courts', [])
+    for court_index in range(max_courts):
+        terrain_no = terrain_numbers[court_index] if court_index < len(terrain_numbers) else court_index + 1
 
-        # Ligne séparatrice de période
-        if period_name != current_period:
-            ws_day_v2.merge_cells(start_row=row_v2, start_column=1, end_row=row_v2, end_column=5)
-            pcell = ws_day_v2.cell(row=row_v2, column=1, value=f"{period_name} — {period_time}")
-            pcell.font = Font(bold=True)
-            pcell.alignment = center
-            pcell.fill = light_fill
-            pcell.border = border
-            row_v2 += 1
-            current_period = period_name
+        # Une ligne A et une ligne B par terrain
+        ws_day_v2.merge_cells(start_row=row_v2, start_column=1, end_row=row_v2 + 1, end_column=1)
+        terrain_cell = ws_day_v2.cell(row=row_v2, column=1, value=terrain_no)
+        terrain_cell.font = bold
+        terrain_cell.alignment = center
+        terrain_cell.fill = light_fill
+        terrain_cell.border = border
 
-        for court in courts:
-            terrain = court.get('number', '')
+        for p_idx, period in enumerate(periods, start=2):
+            courts = period.get('courts', [])
 
-            side_a = court.get('sideA', {})
-            side_b = court.get('sideB', {})
+            if court_index < len(courts):
+                court = courts[court_index]
 
-            a1 = side_a.get('player1', {}).get('fullName', '')
-            a2 = side_a.get('player2', {}).get('fullName', '')
-            b1 = side_b.get('player1', {}).get('fullName', '')
-            b2 = side_b.get('player2', {}).get('fullName', '')
+                side_a = court.get('sideA', {})
+                side_b = court.get('sideB', {})
 
-            team_a = f"{a1} / {a2}"
-            team_b = f"{b1} / {b2}"
+                a1 = side_a.get('player1', {}).get('fullName', '')
+                a2 = side_a.get('player2', {}).get('fullName', '')
+                b1 = side_b.get('player1', {}).get('fullName', '')
+                b2 = side_b.get('player2', {}).get('fullName', '')
 
-            values = [period_name, period_time, terrain, team_a, team_b]
+                cell_a = ws_day_v2.cell(row=row_v2, column=p_idx, value=f"A: {a1} / {a2}")
+                cell_b = ws_day_v2.cell(row=row_v2 + 1, column=p_idx, value=f"B: {b1} / {b2}")
 
-            for col_idx, value in enumerate(values, start=1):
-                cell = ws_day_v2.cell(row=row_v2, column=col_idx, value=value)
-                cell.alignment = center
-                cell.border = border
+                cell_a.alignment = center
+                cell_b.alignment = center
+                cell_a.border = border
+                cell_b.border = border
 
-            row_v2 += 1
+        row_v2 += 2
 
-    # Largeurs colonnes
-    ws_day_v2.column_dimensions['A'].width = 18
-    ws_day_v2.column_dimensions['B'].width = 12
-    ws_day_v2.column_dimensions['C'].width = 10
-    ws_day_v2.column_dimensions['D'].width = 38
-    ws_day_v2.column_dimensions['E'].width = 38
+    # Mise en forme globale
+    ws_day_v2.column_dimensions['A'].width = 10
 
-    # Hauteurs
+    for col_idx in range(2, 2 + len(periods)):
+        ws_day_v2.column_dimensions[get_column_letter(col_idx)].width = 34
+
     ws_day_v2.row_dimensions[1].height = 26
     ws_day_v2.row_dimensions[2].height = 22
 
     for r in range(3, row_v2):
-        ws_day_v2.row_dimensions[r].height = 22
+        ws_day_v2.row_dimensions[r].height = 34
 
-    # Gel de l’en-tête
-    ws_day_v2.freeze_panes = 'A3'
+    ws_day_v2.freeze_panes = 'B3'
 
     output = io.BytesIO()
     wb.save(output)
