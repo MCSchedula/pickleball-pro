@@ -1218,6 +1218,123 @@ def export_excel():
 
     ws_day_v2.freeze_panes = 'B3'
 
+    # ==============================
+    # Feuille : Statistiques avancées
+    # ==============================
+
+    ws_stats_adv = wb.create_sheet('Statistiques avancées')
+
+    ws_stats_adv['A1'] = 'Statistiques avancées'
+    ws_stats_adv.merge_cells('A1:H1')
+    ws_stats_adv['A1'].font = Font(bold=True, size=14)
+    ws_stats_adv['A1'].alignment = center
+    ws_stats_adv['A1'].fill = grey_fill
+
+    headers = [
+        'Joueur',
+        'Matchs',
+        'Partenaires uniques',
+        'Adversaires uniques',
+        'Côté A',
+        'Côté B',
+        'Doubles mixtes',
+        'Drill'
+    ]
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws_stats_adv.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    # Préparer structures
+    stats = {}
+
+    for p in schedule.get('players', []):
+        name = p.get('fullName', '')
+        stats[name] = {
+            'matches': 0,
+            'partners': set(),
+            'opponents': set(),
+            'sideA': 0,
+            'sideB': 0,
+            'mixed': 0,
+            'drill': 1 if p.get('drill') else 0
+        }
+
+    # Parcours des matchs
+    for period in periods:
+        courts = period.get('courts', [])
+
+        for court in courts:
+            side_a = court.get('sideA', {})
+            side_b = court.get('sideB', {})
+
+            a1 = side_a.get('player1', {})
+            a2 = side_a.get('player2', {})
+            b1 = side_b.get('player1', {})
+            b2 = side_b.get('player2', {})
+
+            players = [
+                (a1, 'A', a2, [b1, b2]),
+                (a2, 'A', a1, [b1, b2]),
+                (b1, 'B', b2, [a1, a2]),
+                (b2, 'B', b1, [a1, a2])
+            ]
+
+            for player, side, partner, opponents in players:
+                name = player.get('fullName', '')
+                if name not in stats:
+                    continue
+
+                stats[name]['matches'] += 1
+                stats[name]['partners'].add(partner.get('fullName', ''))
+
+                for opp in opponents:
+                    stats[name]['opponents'].add(opp.get('fullName', ''))
+
+                if side == 'A':
+                    stats[name]['sideA'] += 1
+                else:
+                    stats[name]['sideB'] += 1
+
+                # Double mixte
+                gender = player_gender_map.get(normalize_name(name), '')
+                partner_gender = player_gender_map.get(normalize_name(partner.get('fullName', '')), '')
+
+                if gender and partner_gender and gender != partner_gender:
+                    stats[name]['mixed'] += 1
+
+    # Écriture Excel
+    row = 3
+
+    for name, s in sorted(stats.items()):
+        values = [
+            name,
+            s['matches'],
+            len(s['partners']),
+            len(s['opponents']),
+            s['sideA'],
+            s['sideB'],
+            s['mixed'],
+            s['drill']
+        ]
+
+        for col_idx, value in enumerate(values, start=1):
+            cell = ws_stats_adv.cell(row=row, column=col_idx, value=value)
+            cell.alignment = center
+            cell.border = border
+
+        row += 1
+
+    # Largeurs
+    ws_stats_adv.column_dimensions['A'].width = 28
+    for col in ['B','C','D','E','F','G','H']:
+        ws_stats_adv.column_dimensions[col].width = 18
+
+    ws_stats_adv.freeze_panes = 'A3'
+
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
