@@ -1311,6 +1311,8 @@ def export_excel():
     row = 3
 
     for name, s in sorted(stats.items()):
+        score = len(s['partners']) + len(s['opponents'])
+
         values = [
             name,
             s['matches'],
