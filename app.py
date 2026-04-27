@@ -1359,6 +1359,17 @@ def export_excel():
             else:
                 score_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')  # vert
 
+    # 🎨 Coloration de la colonne Évaluation
+    for r in range(3, row):
+        eval_cell = ws_stats_adv.cell(row=r, column=10)
+
+        if eval_cell.value == 'Faible':
+            eval_cell.fill = PatternFill(fill_type='solid', fgColor='FFC7CE')  # rouge
+        elif eval_cell.value == 'Moyen':
+            eval_cell.fill = PatternFill(fill_type='solid', fgColor='FFEB9C')  # jaune
+        elif eval_cell.value == 'Bon':
+            eval_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')  # vert
+
     # Score moyen (en haut à droite)
     ws_stats_adv['J1'] = 'Score moyen'
     ws_stats_adv['J1'].font = Font(bold=True)
