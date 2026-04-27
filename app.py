@@ -10,6 +10,9 @@ from openpyxl.utils import get_column_letter
 from collections import Counter
 import random
 
+ws_stats_adv['J1'] = 'Score moyen'
+ws_stats_adv['J2'] = f"=AVERAGE(I3:I{row-1})"
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pickleball.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -1310,7 +1313,13 @@ def export_excel():
     # Écriture Excel
     row = 3
 
-    for name, s in sorted(stats.items()):
+    sorted_stats = sorted(
+        stats.items(),
+        key=lambda item: len(item[1]['partners']) + len(item[1]['opponents']),
+        reverse=True
+    )
+
+    for name, s in sorted_stats:
         score = len(s['partners']) + len(s['opponents'])
 
         values = [
