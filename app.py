@@ -1353,6 +1353,15 @@ def export_excel():
             else:
                 score_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')  # vert
 
+    # Score moyen (en haut à droite)
+    ws_stats_adv['J1'] = 'Score moyen'
+    ws_stats_adv['J1'].font = Font(bold=True)
+
+    ws_stats_adv['J2'] = f"=AVERAGE(I3:I{row-1})"
+    ws_stats_adv['J2'].alignment = center
+    ws_stats_adv['J2'].fill = PatternFill(fill_type='solid', fgColor='D9EAD3')
+    ws_stats_adv['J2'].border = border
+
     # Largeurs
     ws_stats_adv.column_dimensions['A'].width = 28
     for col in ['B','C','D','E','F','G','H','I']:
