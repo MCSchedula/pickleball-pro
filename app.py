@@ -10,9 +10,6 @@ from openpyxl.utils import get_column_letter
 from collections import Counter
 import random
 
-ws_stats_adv['J1'] = 'Score moyen'
-ws_stats_adv['J2'] = f"=AVERAGE(I3:I{row-1})"
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pickleball.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
