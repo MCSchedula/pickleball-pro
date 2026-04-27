@@ -1239,7 +1239,8 @@ def export_excel():
         'Côté B',
         'Doubles mixtes',
         'Drill',
-        'Score équité'
+        'Score équité',
+        'Évaluation'
     ]
 
     for col_idx, header in enumerate(headers, start=1):
@@ -1318,6 +1319,13 @@ def export_excel():
 
     for name, s in sorted_stats:
         score = len(s['partners']) + len(s['opponents'])
+    
+        if score < 6:
+            evaluation = 'Faible'
+        elif score < 10:
+            evaluation = 'Moyen'
+        else:
+            evaluation = 'Bon'
 
         values = [
             name,
@@ -1328,7 +1336,8 @@ def export_excel():
             s['sideB'],
             s['mixed'],
             s['drill'],
-            score
+            score,
+            evaluation
         ]
 
         for col_idx, value in enumerate(values, start=1):
