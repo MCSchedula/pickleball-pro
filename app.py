@@ -1218,17 +1218,11 @@ def export_excel():
 
     ws_day_v2.freeze_panes = 'B3'
 
-    # ==============================
+     # ==============================
     # Feuille : Statistiques avancées
     # ==============================
 
     ws_stats_adv = wb.create_sheet('Statistiques avancées')
-
-    ws_stats_adv['A1'] = 'Statistiques avancées'
-    ws_stats_adv.merge_cells('A1:H1')
-    ws_stats_adv['A1'].font = Font(bold=True, size=14)
-    ws_stats_adv['A1'].alignment = center
-    ws_stats_adv['A1'].fill = grey_fill
 
     headers = [
         'Joueur',
@@ -1243,8 +1237,9 @@ def export_excel():
         'Évaluation'
     ]
 
+    # En-têtes en ligne 3
     for col_idx, header in enumerate(headers, start=1):
-        cell = ws_stats_adv.cell(row=2, column=col_idx, value=header)
+        cell = ws_stats_adv.cell(row=3, column=col_idx, value=header)
         cell.font = bold
         cell.alignment = center
         cell.fill = grey_fill
@@ -1301,25 +1296,25 @@ def export_excel():
                 else:
                     stats[name]['sideB'] += 1
 
-                # Double mixte
                 gender = player_gender_map.get(normalize_name(name), '')
                 partner_gender = player_gender_map.get(normalize_name(partner.get('fullName', '')), '')
 
                 if gender and partner_gender and gender != partner_gender:
                     stats[name]['mixed'] += 1
 
-    # Écriture Excel
-    row = 3
-
+    # Trier par score d'équité décroissant
     sorted_stats = sorted(
         stats.items(),
         key=lambda item: len(item[1]['partners']) + len(item[1]['opponents']),
         reverse=True
     )
 
+    # Écriture Excel à partir de la ligne 4
+    row = 4
+
     for name, s in sorted_stats:
         score = len(s['partners']) + len(s['opponents'])
-    
+
         if score < 6:
             evaluation = 'Faible'
         elif score < 10:
@@ -1347,44 +1342,76 @@ def export_excel():
 
         row += 1
 
-    # 🎨 Coloration du score d'équité
-    for r in range(3, row):
+    # Coloration du score d'équité
+    for r in range(4, row):
         score_cell = ws_stats_adv.cell(row=r, column=9)
 
         if score_cell.value is not None:
             if score_cell.value < 6:
-                score_cell.fill = PatternFill(fill_type='solid', fgColor='FFC7CE')  # rouge
+                score_cell.fill = PatternFill(fill_type='solid', fgColor='FFC7CE')
             elif score_cell.value < 10:
-                score_cell.fill = PatternFill(fill_type='solid', fgColor='FFEB9C')  # jaune
+                score_cell.fill = PatternFill(fill_type='solid', fgColor='FFEB9C')
             else:
-                score_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')  # vert
+                score_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')
 
-    # 🎨 Coloration de la colonne Évaluation
-    for r in range(3, row):
+    # Coloration de la colonne Évaluation
+    for r in range(4, row):
         eval_cell = ws_stats_adv.cell(row=r, column=10)
 
         if eval_cell.value == 'Faible':
-            eval_cell.fill = PatternFill(fill_type='solid', fgColor='FFC7CE')  # rouge
+            eval_cell.fill = PatternFill(fill_type='solid', fgColor='FFC7CE')
         elif eval_cell.value == 'Moyen':
-            eval_cell.fill = PatternFill(fill_type='solid', fgColor='FFEB9C')  # jaune
+            eval_cell.fill = PatternFill(fill_type='solid', fgColor='FFEB9C')
         elif eval_cell.value == 'Bon':
-            eval_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')  # vert
+            eval_cell.fill = PatternFill(fill_type='solid', fgColor='C6EFCE')
 
-    # Score moyen (en haut à droite)
-    ws_stats_adv['J1'] = 'Score moyen'
-    ws_stats_adv['J1'].font = Font(bold=True)
+    # Alerte automatique
+    nb_faible = 0
 
-    ws_stats_adv['J2'] = f"=AVERAGE(I3:I{row-1})"
+    for r in range(4, row):
+        if ws_stats_adv.cell(row=r, column=10).value == 'Faible':
+            nb_faible += 1
+
+    if nb_faible > 0:
+        message = f"⚠️ Déséquilibre détecté : {nb_faible} joueurs Faible"
+        fill_color = 'FFC7CE'
+    else:
+        message = "✅ Cédule équilibrée"
+        fill_color = 'C6EFCE'
+
+    # Ligne 1 : alerte
+    ws_stats_adv.merge_cells('A1:J1')
+    ws_stats_adv['A1'] = message
+    ws_stats_adv['A1'].font = Font(bold=True, size=14)
+    ws_stats_adv['A1'].alignment = center
+    ws_stats_adv['A1'].fill = PatternFill(fill_type='solid', fgColor=fill_color)
+    ws_stats_adv['A1'].border = border
+
+    # Ligne 2 : titre + score moyen
+    ws_stats_adv.merge_cells('A2:H2')
+    ws_stats_adv['A2'] = 'Statistiques avancées'
+    ws_stats_adv['A2'].font = Font(bold=True, size=14)
+    ws_stats_adv['A2'].alignment = center
+    ws_stats_adv['A2'].fill = grey_fill
+    ws_stats_adv['A2'].border = border
+
+    ws_stats_adv['I2'] = 'Score moyen'
+    ws_stats_adv['I2'].font = Font(bold=True)
+    ws_stats_adv['I2'].alignment = center
+    ws_stats_adv['I2'].fill = grey_fill
+    ws_stats_adv['I2'].border = border
+
+    ws_stats_adv['J2'] = f"=AVERAGE(I4:I{row-1})"
     ws_stats_adv['J2'].alignment = center
     ws_stats_adv['J2'].fill = PatternFill(fill_type='solid', fgColor='D9EAD3')
     ws_stats_adv['J2'].border = border
 
     # Largeurs
     ws_stats_adv.column_dimensions['A'].width = 28
-    for col in ['B','C','D','E','F','G','H','I']:
+    for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']:
         ws_stats_adv.column_dimensions[col].width = 18
 
-    ws_stats_adv.freeze_panes = 'A3'
+    ws_stats_adv.freeze_panes = 'A4'
 
     output = io.BytesIO()
     wb.save(output)
