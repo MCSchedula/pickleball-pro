@@ -430,6 +430,39 @@ def upload_excel():
 
     return jsonify(result)
 
+def calculate_schedule_score(schedule):
+    teammate_counts = {}
+    opponent_counts = {}
+    penalties = 0
+
+    for period in schedule.get('periods', []):
+        for court in period.get('courts', []):
+            a1 = court['sideA']['player1']['fullName']
+            a2 = court['sideA']['player2']['fullName']
+            b1 = court['sideB']['player1']['fullName']
+            b2 = court['sideB']['player2']['fullName']
+
+            for pair in [(a1, a2), (a2, a1), (b1, b2), (b2, b1)]:
+                teammate_counts[pair] = teammate_counts.get(pair, 0) + 1
+
+            for pair in [
+                (a1, b1), (a1, b2),
+                (a2, b1), (a2, b2),
+                (b1, a1), (b1, a2),
+                (b2, a1), (b2, a2)
+            ]:
+                opponent_counts[pair] = opponent_counts.get(pair, 0) + 1
+
+    for count in teammate_counts.values():
+        if count > 1:
+            penalties += (count - 1) * 20
+
+    for count in opponent_counts.values():
+        if count > 2:
+            penalties += (count - 2) * 10
+
+    return 1000 - penalties
+
 @app.route('/api/generate', methods=['POST'])
 def generate_schedule():
     data = request.json
@@ -450,7 +483,19 @@ def generate_schedule():
     }
     
     # Generate schedule using algorithm
-    schedule_result = generate_schedule_algorithm(event.to_dict(), selected_players, drill_players, settings)
+    best_schedule = None
+    best_score = -999999
+
+    for i in range(30):
+        candidate = generate_schedule_algorithm(event.to_dict(), selected_players, drill_players, settings)
+        candidate_score = calculate_schedule_score(candidate)
+
+        if candidate_score > best_score:
+            best_score = candidate_score
+            best_schedule = candidate
+
+    schedule_result = best_schedule
+    schedule_result['optimizationScore'] = best_score
 
     # Ajoute les joueurs avec leur genre pour l'export Excel
     schedule_result['players'] = selected_players
