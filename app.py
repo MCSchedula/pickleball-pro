@@ -1451,6 +1451,19 @@ def export_excel():
     ws_stats_adv['J2'].fill = PatternFill(fill_type='solid', fgColor='D9EAD3')
     ws_stats_adv['J2'].border = border
 
+    ws_stats_adv['K1'] = 'Score optimisation'
+    ws_stats_adv['K1'].font = Font(bold=True)
+    ws_stats_adv['K1'].alignment = center
+    ws_stats_adv['K1'].fill = grey_fill
+    ws_stats_adv['K1'].border = border
+
+    ws_stats_adv['K2'] = schedule.get('optimizationScore', '')
+    ws_stats_adv['K2'].alignment = center
+    ws_stats_adv['K2'].fill = PatternFill(fill_type='solid', fgColor='D9EAD3')
+    ws_stats_adv['K2'].border = border
+
+ws_stats_adv.column_dimensions['K'].width = 18
+
     # Largeurs
     ws_stats_adv.column_dimensions['A'].width = 28
     for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']:
