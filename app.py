@@ -530,6 +530,24 @@ def export_excel():
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Cédule de la journée'
+
+    ws.sheet_view.showGridLines = False
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.freeze_panes = 'C3'
+
+    center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    bold = Font(bold=True)
+    title_font = Font(bold=True, size=12)
+
+    header_fill = PatternFill(fill_type='solid', fgColor='D9D9D9')
+    light_fill = PatternFill(fill_type='solid', fgColor='F7F7F7')
+
+    thin = Side(style='thin', color='A6A6A6')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
     ws_players = wb.create_sheet('Cédule pour chaque joueur')
     ws_stats = wb.create_sheet('Cédule - Statistiques')
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
