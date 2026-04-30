@@ -19,6 +19,17 @@ migrate = Migrate(app, db)
 
 import unicodedata
 
+def clean_player_name(value):
+    if not value:
+        return ''
+
+    text = str(value).strip()
+
+    if '!' in text:
+        text = text.split('!')[0].strip()
+
+    return text
+
 def normalize_name(value):
     if not value:
         return ''
@@ -301,6 +312,7 @@ def upload_excel():
                 continue
 
             # récupération depuis Membres
+            full_name = clean_player_name(full_name)
             member_info = members_map.get(normalize_name(full_name), {})
 
             if not member_info:
