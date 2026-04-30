@@ -543,6 +543,45 @@ def export_excel():
     ws = wb.active
     ws.title = 'Cédule de la journée'
 
+    # ==============================
+    # Titre principal
+    # ==============================
+
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2 + len(periods)*2)
+    ws.cell(row=1, column=1, value='Cédule de la journée').font = Font(bold=True, size=14)
+    ws.cell(row=1, column=1).alignment = center
+    ws.cell(row=1, column=1).fill = grey_fill
+
+    # ==============================
+    # Ligne 2 : Terrain / Côté + Heures
+    # ==============================    
+
+    ws.cell(row=2, column=1, value='Terrain')
+    ws.cell(row=2, column=2, value='Côté')
+
+    for c in [1, 2]:
+        ws.cell(row=2, column=c).font = bold
+        ws.cell(row=2, column=c).alignment = center
+        ws.cell(row=2, column=c).fill = grey_fill
+        ws.cell(row=2, column=c).border = border
+
+    col = 3
+    for period in periods:
+        time_label = period.get('time', '')
+
+        ws.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 1)
+
+        cell = ws.cell(row=2, column=col, value=time_label)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+        ws.cell(row=2, column=col + 1).fill = grey_fill
+        ws.cell(row=2, column=col + 1).border = border
+
+        col += 2
+
     ws.sheet_view.showGridLines = False
     ws.page_setup.orientation = 'landscape'
     ws.page_setup.fitToWidth = 1
@@ -670,33 +709,29 @@ def export_excel():
 
     # Données : 2 lignes par terrain (A et B)
     row = 3
+
     for court_index in range(max_courts):
-        terrain_numbers = [3, 4, 5, 6, 7, 8, 10, 11, 12, 99]
+
         terrain_no = terrain_numbers[court_index] if court_index < len(terrain_numbers) else court_index + 1
-        # Ligne A
-        ws.merge_cells(start_row=row, start_column=1, end_row=row + 1, end_column=1)
-        ws.cell(row=row, column=1, value=terrain_no)
-        ws.cell(row=row, column=1).alignment = center
-        ws.cell(row=row, column=1).border = border
-        ws.cell(row=row, column=1).fill = light_fill
 
-        ws.cell(row=row, column=2, value='A')
-        ws.cell(row=row + 1, column=2, value='B')
+        # Fusion Terrain
+        ws.merge_cells(start_row=row, start_column=1, end_row=row+1, end_column=1)
 
-        for r in [row, row + 1]:
-            ws.cell(row=r, column=2).alignment = center
-            ws.cell(row=r, column=2).border = border
-            ws.cell(row=r, column=2).fill = light_fill
+        terrain_cell = ws.cell(row=row, column=1, value=terrain_no)
+        terrain_cell.font = bold
+        terrain_cell.alignment = center
+        terrain_cell.fill = light_fill
+        terrain_cell.border = border
 
-        for c in [1, 2]:
-            ws.cell(row=row, column=c).alignment = center
-            ws.cell(row=row + 1, column=c).alignment = center
-            ws.cell(row=row, column=c).border = border
-            ws.cell(row=row + 1, column=c).border = border
-            ws.cell(row=row, column=c).fill = light_fill
-            ws.cell(row=row + 1, column=c).fill = light_fill
+        # Colonne Côté
+        ws.cell(row=row, column=2, value='A').alignment = center
+        ws.cell(row=row+1, column=2, value='B').alignment = center
+
+        ws.cell(row=row, column=2).border = border
+        ws.cell(row=row+1, column=2).border = border
 
         col = 3
+
         for period in periods:
             courts = period.get('courts', [])
 
@@ -712,19 +747,26 @@ def export_excel():
                 b2 = side_b.get('player2', {}).get('fullName', '')
 
                 ws.cell(row=row, column=col, value=a1)
-                ws.cell(row=row, column=col + 1, value=a2)
-                ws.cell(row=row + 1, column=col, value=b1)
-                ws.cell(row=row + 1, column=col + 1, value=b2)
+                ws.cell(row=row, column=col+1, value=a2)
 
-                for r in [row, row + 1]:
-                    for c in [col, col + 1]:
+                ws.cell(row=row+1, column=col, value=b1)
+                ws.cell(row=row+1, column=col+1, value=b2)
+
+                # Format
+                for r in [row, row+1]:
+                    for c in [col, col+1]:
                         ws.cell(row=r, column=c).alignment = center
                         ws.cell(row=r, column=c).border = border
-                        ws.cell(row=r, column=c).fill = PatternFill(fill_type='solid', fgColor='FFFFFF')
 
             col += 2
 
         row += 2
+
+        ws.column_dimensions['A'].width = 10
+        ws.column_dimensions['B'].width = 6
+
+        for col_idx in range(3, 3 + len(periods)*2):
+            ws.column_dimensions[get_column_letter(col_idx)].width = 18
 
     # Largeur des colonnes
     ws.column_dimensions['A'].width = 8
