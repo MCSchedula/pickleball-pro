@@ -131,13 +131,6 @@ class Setting(db.Model):
 @app.route('/')
 def index():
     print("HOME OK")
-
-@app.route('/api/generate', methods=['POST'])
-def generate_schedule():
-    print("GENERATE CALLED")
-
-@app.route('/')
-def index():
     return render_template('index.html')
 
 @app.route('/api/players', methods=['GET'])
@@ -190,6 +183,7 @@ def reset_data():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/upload', methods=['POST'])
+
 def upload_excel():
     if 'file' not in request.files:
         return jsonify({'error': 'No file'}), 400
@@ -486,6 +480,7 @@ def calculate_schedule_score(schedule):
 
 @app.route('/api/generate', methods=['POST'])
 def generate_schedule():
+    print("GENERATE CALLED")
     data = request.json
     event_id = data.get('eventId')
     selected_ids = data.get('selectedPlayers', [])
