@@ -547,6 +547,18 @@ def export_excel():
     ws = wb.active
     ws.title = 'Cédule de la journée'
 
+    center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    left = Alignment(horizontal='left', vertical='center', wrap_text=True)
+
+    title_font = Font(bold=True, size=12)
+    bold = Font(bold=True)
+
+    grey_fill = PatternFill(fill_type='solid', fgColor='D9D9D9')
+    light_fill = PatternFill(fill_type='solid', fgColor='F7F7F7')
+
+    thin = Side(style='thin', color='A6A6A6')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
     # ==============================
     # Titre principal
     # ==============================
