@@ -12,13 +12,6 @@ import random
 
 app = Flask(__name__)
 print("APP STARTED")
-@app.route('/')
-def index():
-    print("HOME OK")
-
-@app.route('/api/generate', methods=['POST'])
-def generate_schedule():
-    print("GENERATE CALLED")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pickleball.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -135,12 +128,13 @@ class Setting(db.Model):
         db.session.commit()
 
 # ==================== ROUTES ====================
+@app.route('/')
+def index():
+    print("HOME OK")
 
 @app.route('/api/generate', methods=['POST'])
 def generate_schedule():
-    print("GENERATE ROUTE CALLED")
-
-
+    print("GENERATE CALLED")
 
 @app.route('/')
 def index():
