@@ -1,3 +1,11 @@
+print("APP STARTED")
+
+@app.route('/')
+def home():
+    print("HOME OK")
+    return "OK"
+
+
 from flask import Flask, render_template, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -126,6 +134,12 @@ class Setting(db.Model):
         db.session.commit()
 
 # ==================== ROUTES ====================
+
+@app.route('/api/generate', methods=['POST'])
+def generate_schedule():
+    print("GENERATE ROUTE CALLED")
+
+
 
 @app.route('/')
 def index():
