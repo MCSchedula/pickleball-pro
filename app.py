@@ -1,11 +1,3 @@
-print("APP STARTED")
-
-@app.route('/')
-def home():
-    print("HOME OK")
-    return "OK"
-
-
 from flask import Flask, render_template, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -19,6 +11,15 @@ from collections import Counter
 import random
 
 app = Flask(__name__)
+print("APP STARTED")
+@app.route('/')
+def index():
+    print("HOME OK")
+
+@app.route('/api/generate', methods=['POST'])
+def generate_schedule():
+    print("GENERATE CALLED")
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pickleball.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'pickleball-dsp-secret-key-2026'
