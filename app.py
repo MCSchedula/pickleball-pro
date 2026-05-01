@@ -502,7 +502,7 @@ def generate_schedule():
     best_schedule = None
     best_score = -999999
 
-    for i in range(30):
+    for i in range(1):
         candidate = generate_schedule_algorithm(event.to_dict(), selected_players, drill_players, settings)
         candidate_score = calculate_schedule_score(candidate)
 
