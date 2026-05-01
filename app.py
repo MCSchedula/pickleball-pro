@@ -726,6 +726,8 @@ def export_excel():
     # Données : 2 lignes par terrain (A et B)
     row = 3
 
+    terrain_numbers = [3, 4, 5, 6, 7, 8, 10, 11, 12, 99]
+
     for court_index in range(max_courts):
 
         terrain_no = terrain_numbers[court_index] if court_index < len(terrain_numbers) else court_index + 1
