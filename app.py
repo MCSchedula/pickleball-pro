@@ -563,10 +563,40 @@ def export_excel():
     # Titre principal
     # ==============================
 
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2 + len(periods)*2)
-    ws.cell(row=1, column=1, value='Cédule de la journée').font = Font(bold=True, size=14)
-    ws.cell(row=1, column=1).alignment = center
-    ws.cell(row=1, column=1).fill = grey_fill
+# ==============================
+# En-tête style VBA - Cédule de la journée
+# ==============================
+
+    # Ligne 1 : informations générales
+    ws.cell(row=1, column=3, value='Jeudi 2026-04-09 (Drill)')
+    ws.cell(row=1, column=5, value='Ligue: DSP')
+    ws.cell(row=1, column=7, value='Événement: Les Jeudis DSP')
+    ws.cell(row=1, column=11, value='Endroit: Tennis 13')
+
+    for cell_ref in ['C1', 'E1', 'G1', 'K1']:
+        ws[cell_ref].font = Font(bold=True)
+        ws[cell_ref].alignment = center
+
+    # Ligne 2 : heures
+    col = 3
+    for period in periods:
+        time_label = period.get('time', '')
+
+        ws.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 1)
+
+        cell = ws.cell(row=2, column=col, value=time_label)
+        cell.font = Font(bold=True)
+        cell.alignment = center
+        cell.border = border
+
+        # Appliquer aussi la bordure à la cellule fusionnée de droite
+        ws.cell(row=2, column=col + 1).border = border
+
+        col += 2
+
+    # Colonnes A/B sans titre visible, comme ton VBA
+    ws.cell(row=2, column=1, value='')
+    ws.cell(row=2, column=2, value='')
 
     # ==============================
     # Ligne 2 : Terrain / Côté + Heures
