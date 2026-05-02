@@ -631,9 +631,6 @@ def export_excel():
         # Ajouter colonne séparation
         ws.column_dimensions[get_column_letter(col)].width = 4
 
-        for r in range(2, row):  # ligne 2 jusqu’à fin des données
-            ws.cell(row=r, column=col).fill = PatternFill(fill_type='solid', fgColor='D9D9D9')
-
         col += 1
 
     ws.sheet_view.showGridLines = False
