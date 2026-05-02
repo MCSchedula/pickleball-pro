@@ -806,7 +806,7 @@ def export_excel():
                 # Format
                 for r in [row, row+1]:
                     for c in [col, col+1]:
-                        ws.cell(row=r, column=c).alignment = center
+                        ws.cell(row=r, column=c).alignment = left
                         ws.cell(row=r, column=c).border = border
 
             col += 2
@@ -824,17 +824,26 @@ def export_excel():
 
     # Largeur des colonnes
     ws.column_dimensions['A'].width = 8
-    ws.column_dimensions['B'].width = 6
+    ws.column_dimensions['B'].width = 5
 
-    for col_idx in range(3, total_columns + 1):
-        col_letter = get_column_letter(col_idx)
-        ws.column_dimensions[col_letter].width = 16
+    for col_idx in range(3, 3 + len(periods)*2):
+        ws.column_dimensions[get_column_letter(col_idx)].width = 16
 
         ws.row_dimensions[1].height = 26
         ws.row_dimensions[2].height = 22
 
         for r in range(3, row):
-            ws.row_dimensions[r].height = 26
+            ws.row_dimensions[r].height = 28
+
+    # Bordure entre terrains
+    thick = Side(style='medium', color='000000')
+
+    for r in range(3, row, 2):
+        for c in range(1, 3 + len(periods)*2):
+            ws.cell(row=r, column=c).border = Border(top=thick)
+
+    # Alignement des noms
+    left = Alignment(horizontal='left', vertical='center', wrap_text=True)
 
     # ==============================
     # Feuille : Cédule pour chaque joueur
