@@ -618,20 +618,18 @@ def export_excel():
         ws.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 1)
 
         cell = ws.cell(row=2, column=col, value=time_label)
-        cell.font = bold
+        cell.font = Font(bold=True, size=11)
         cell.alignment = center
-        cell.fill = grey_fill
         cell.border = border
 
-        ws.cell(row=2, column=col + 1).fill = grey_fill
         ws.cell(row=2, column=col + 1).border = border
 
         col += 2
 
         # Ajouter colonne séparation
-        ws.column_dimensions[get_column_letter(col)].width = 4
+        #ws.column_dimensions[get_column_letter(col)].width = 4
 
-        col += 1
+        #col += 1
 
     ws.sheet_view.showGridLines = False
     ws.page_setup.orientation = 'landscape'
