@@ -574,7 +574,7 @@ def export_excel():
     ws.cell(row=1, column=11, value='Endroit: Tennis 13')
 
     for cell_ref in ['C1', 'E1', 'G1', 'K1']:
-        ws[cell_ref].font = Font(bold=True)
+        ws[cell_ref].font = Font(bold=True, size=11)
         ws[cell_ref].alignment = center
 
     # Ligne 2 : heures
@@ -585,7 +585,7 @@ def export_excel():
         ws.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 1)
 
         cell = ws.cell(row=2, column=col, value=time_label)
-        cell.font = Font(bold=True)
+        cell.font = Font(bold=True, size=11)
         cell.alignment = center
         cell.border = border
 
@@ -627,6 +627,14 @@ def export_excel():
         ws.cell(row=2, column=col + 1).border = border
 
         col += 2
+
+        # Ajouter colonne séparation
+        ws.column_dimensions[get_column_letter(col)].width = 4
+
+        for r in range(2, row):  # ligne 2 jusqu’à fin des données
+            ws.cell(row=r, column=col).fill = PatternFill(fill_type='solid', fgColor='D9D9D9')
+
+        col += 1
 
     ws.sheet_view.showGridLines = False
     ws.page_setup.orientation = 'landscape'
@@ -813,8 +821,11 @@ def export_excel():
         ws.column_dimensions['A'].width = 10
         ws.column_dimensions['B'].width = 6
 
-        for col_idx in range(3, 3 + len(periods)*2):
-            ws.column_dimensions[get_column_letter(col_idx)].width = 18
+        col_idx = 3
+        for period in periods:
+            ws.column_dimensions[get_column_letter(col_idx)].width = 16
+            ws.column_dimensions[get_column_letter(col_idx+1)].width = 16
+            col_idx += 3  # 2 joueurs + 1 séparation
 
     # Largeur des colonnes
     ws.column_dimensions['A'].width = 8
