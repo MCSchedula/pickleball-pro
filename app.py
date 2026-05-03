@@ -652,7 +652,6 @@ def export_excel():
     ws_stats = wb.create_sheet('Cédule - Statistiques')
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
-    ws_day_v2 = wb.create_sheet('Cédule de la journée (V2)')
 
     ws_mixed = wb.create_sheet('Double Mixtes')
 
