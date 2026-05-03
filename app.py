@@ -1345,50 +1345,97 @@ def export_excel():
     for r in range(3, row_m):
         ws_mixed.row_dimensions[r].height = 20
 
-
     # ==============================
-    # Feuille : Cédule de la journée (V2) - Grille horaire
+    # Feuille : Cédule de la journée (V2)
     # ==============================
 
-    ws_day_v2['A1'] = 'Cédule de la journée (V2)'
-    ws_day_v2.merge_cells(start_row=1, start_column=1, end_row=1, end_column=1 + len(periods))
-    ws_day_v2['A1'].font = Font(bold=True, size=14)
-    ws_day_v2['A1'].alignment = center
-    ws_day_v2['A1'].fill = grey_fill
+    ws_day_v2 = wb.create_sheet('Cédule de la journée (V2)')
+
+    ws_day_v2.sheet_view.showGridLines = False
+    ws_day_v2.page_setup.orientation = 'landscape'
+    ws_day_v2.page_setup.fitToWidth = 1
+    ws_day_v2.page_setup.fitToHeight = 0
+    ws_day_v2.sheet_properties.pageSetUpPr.fitToPage = True
+
+    # Styles locaux
+    v2_center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    v2_left = Alignment(horizontal='left', vertical='center', wrap_text=True)
+
+    v2_bold = Font(name='Calibri', size=11, bold=True)
+    v2_normal = Font(name='Calibri', size=11)
+
+    v2_header_fill = PatternFill(fill_type='solid', fgColor='D9D9D9')
+    v2_light_fill = PatternFill(fill_type='solid', fgColor='F7F7F7')
+    v2_white_fill = PatternFill(fill_type='solid', fgColor='FFFFFF')
+
+    v2_thin = Side(style='thin', color='A6A6A6')
+    v2_medium = Side(style='medium', color='000000')
+    v2_border = Border(left=v2_thin, right=v2_thin, top=v2_thin, bottom=v2_thin)
+
+    # En-tête style VBA
+    ws_day_v2.cell(row=1, column=3, value='Jeudi 2026-04-09 (Drill)')
+    ws_day_v2.cell(row=1, column=5, value='Ligue: DSP')
+    ws_day_v2.cell(row=1, column=7, value='Événement: Les Jeudis DSP')
+    ws_day_v2.cell(row=1, column=9, value='Endroit: Tennis 13')
+
+    for cell_ref in ['C1', 'E1', 'G1', 'I1']:
+        ws_day_v2[cell_ref].font = v2_bold
+        ws_day_v2[cell_ref].alignment = Alignment(horizontal='left', vertical='center')
+
+    ws_day_v2.row_dimensions[1].height = 20
 
     # Ligne 2 : heures
-    ws_day_v2.cell(row=2, column=1, value='Terrain')
-    ws_day_v2.cell(row=2, column=1).font = bold
-    ws_day_v2.cell(row=2, column=1).alignment = center
-    ws_day_v2.cell(row=2, column=1).fill = grey_fill
-    ws_day_v2.cell(row=2, column=1).border = border
+    col = 3
+    for period in periods:
+        time_label = period.get('time', '')
 
-    for idx, period in enumerate(periods, start=2):
-        cell = ws_day_v2.cell(row=2, column=idx, value=period.get('time', ''))
-        cell.font = bold
-        cell.alignment = center
-        cell.fill = grey_fill
-        cell.border = border
+        ws_day_v2.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 1)
+
+        cell = ws_day_v2.cell(row=2, column=col, value=time_label)
+        cell.font = v2_bold
+        cell.alignment = v2_center
+        cell.fill = v2_header_fill
+        cell.border = v2_border
+
+        ws_day_v2.cell(row=2, column=col + 1).fill = v2_header_fill
+        ws_day_v2.cell(row=2, column=col + 1).border = v2_border
+
+        col += 2
+
+    ws_day_v2.row_dimensions[2].height = 22
 
     # Nombre maximal de terrains
-    max_courts = max(len(period.get('courts', [])) for period in periods) if periods else 0
-
-    terrain_numbers = [3, 4, 5, 6, 7, 8, 10, 11, 12, 99]
+    max_courts_v2 = max(len(period.get('courts', [])) for period in periods) if periods else 0
+    terrain_numbers_v2 = [3, 4, 5, 6, 7, 8, 10, 11, 12, 99]
 
     row_v2 = 3
 
-    for court_index in range(max_courts):
-        terrain_no = terrain_numbers[court_index] if court_index < len(terrain_numbers) else court_index + 1
+    for court_index in range(max_courts_v2):
+        terrain_no = terrain_numbers_v2[court_index] if court_index < len(terrain_numbers_v2) else court_index + 1
+        fill_terrain = v2_light_fill if court_index % 2 == 0 else v2_white_fill
 
-        # Une ligne A et une ligne B par terrain
+        # Terrain fusionné sur 2 lignes
         ws_day_v2.merge_cells(start_row=row_v2, start_column=1, end_row=row_v2 + 1, end_column=1)
-        terrain_cell = ws_day_v2.cell(row=row_v2, column=1, value=terrain_no)
-        terrain_cell.font = bold
-        terrain_cell.alignment = center
-        terrain_cell.fill = light_fill
-        terrain_cell.border = border
 
-        for p_idx, period in enumerate(periods, start=2):
+        terrain_cell = ws_day_v2.cell(row=row_v2, column=1, value=terrain_no)
+        terrain_cell.font = v2_bold
+        terrain_cell.alignment = v2_center
+        terrain_cell.fill = fill_terrain
+        terrain_cell.border = v2_border
+
+        # Colonne A/B
+        ws_day_v2.cell(row=row_v2, column=2, value='A')
+        ws_day_v2.cell(row=row_v2 + 1, column=2, value='B')
+
+        for r in [row_v2, row_v2 + 1]:
+            ws_day_v2.cell(row=r, column=2).font = v2_normal
+            ws_day_v2.cell(row=r, column=2).alignment = v2_center
+            ws_day_v2.cell(row=r, column=2).fill = fill_terrain
+            ws_day_v2.cell(row=r, column=2).border = v2_border
+
+        col = 3
+
+        for period in periods:
             courts = period.get('courts', [])
 
             if court_index < len(courts):
@@ -1402,29 +1449,84 @@ def export_excel():
                 b1 = side_b.get('player1', {}).get('fullName', '')
                 b2 = side_b.get('player2', {}).get('fullName', '')
 
-                cell_a = ws_day_v2.cell(row=row_v2, column=p_idx, value=f"A: {a1} / {a2}")
-                cell_b = ws_day_v2.cell(row=row_v2 + 1, column=p_idx, value=f"B: {b1} / {b2}")
+                ws_day_v2.cell(row=row_v2, column=col, value=a1)
+                ws_day_v2.cell(row=row_v2, column=col + 1, value=a2)
 
-                cell_a.alignment = center
-                cell_b.alignment = center
-                cell_a.border = border
-                cell_b.border = border
+                ws_day_v2.cell(row=row_v2 + 1, column=col, value=b1)
+                ws_day_v2.cell(row=row_v2 + 1, column=col + 1, value=b2)
+
+                for r in [row_v2, row_v2 + 1]:
+                    for c in [col, col + 1]:
+                        ws_day_v2.cell(row=r, column=c).font = v2_normal
+                        ws_day_v2.cell(row=r, column=c).alignment = v2_left
+                        ws_day_v2.cell(row=r, column=c).border = v2_border
+
+            col += 2
 
         row_v2 += 2
 
-    # Mise en forme globale
-    ws_day_v2.column_dimensions['A'].width = 10
+    # Largeurs
+    ws_day_v2.column_dimensions['A'].width = 8
+    ws_day_v2.column_dimensions['B'].width = 5
 
-    for col_idx in range(2, 2 + len(periods)):
-        ws_day_v2.column_dimensions[get_column_letter(col_idx)].width = 34
+    for col_idx in range(3, 3 + len(periods) * 2):
+        ws_day_v2.column_dimensions[get_column_letter(col_idx)].width = 16
 
-    ws_day_v2.row_dimensions[1].height = 26
-    ws_day_v2.row_dimensions[2].height = 22
-
+    # Hauteurs
     for r in range(3, row_v2):
-        ws_day_v2.row_dimensions[r].height = 34
+        ws_day_v2.row_dimensions[r].height = 28
 
-    ws_day_v2.freeze_panes = 'B3'
+    # Bordures séparatrices entre terrains
+    for r in range(3, row_v2, 2):
+        for c in range(1, 3 + len(periods) * 2):
+            existing = ws_day_v2.cell(row=r, column=c).border
+            ws_day_v2.cell(row=r, column=c).border = Border(
+                left=existing.left,
+                right=existing.right,
+                top=v2_medium,
+                bottom=existing.bottom
+            )
+
+    # Bordure extérieure
+    max_col_v2 = 2 + len(periods) * 2
+    max_row_v2 = row_v2 - 1
+
+    for r in range(2, max_row_v2 + 1):
+        existing_left = ws_day_v2.cell(row=r, column=1).border
+        ws_day_v2.cell(row=r, column=1).border = Border(
+            left=v2_medium,
+            right=existing_left.right,
+            top=existing_left.top,
+            bottom=existing_left.bottom
+        )
+
+        existing_right = ws_day_v2.cell(row=r, column=max_col_v2).border
+        ws_day_v2.cell(row=r, column=max_col_v2).border = Border(
+            left=existing_right.left,
+            right=v2_medium,
+            top=existing_right.top,
+            bottom=existing_right.bottom
+        )
+
+    for c in range(1, max_col_v2 + 1):
+        existing_top = ws_day_v2.cell(row=2, column=c).border
+        ws_day_v2.cell(row=2, column=c).border = Border(
+            left=existing_top.left,
+            right=existing_top.right,
+            top=v2_medium,
+            bottom=existing_top.bottom
+        )
+
+        existing_bottom = ws_day_v2.cell(row=max_row_v2, column=c).border
+        ws_day_v2.cell(row=max_row_v2, column=c).border = Border(
+            left=existing_bottom.left,
+            right=existing_bottom.right,
+            top=existing_bottom.top,
+            bottom=v2_medium
+        )
+
+    ws_day_v2.freeze_panes = 'C3'
+    ws_day_v2.print_area = f"A1:{get_column_letter(max_col_v2)}{max_row_v2}"
 
      # ==============================
     # Feuille : Statistiques avancées
