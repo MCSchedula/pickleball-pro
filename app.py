@@ -763,6 +763,7 @@ def export_excel():
 
     for court_index in range(max_courts):
 
+        fill_terrain = light_fill if court_index % 2 == 0 else PatternFill(fill_type='solid', fgColor='FFFFFF')
         terrain_no = terrain_numbers[court_index] if court_index < len(terrain_numbers) else court_index + 1
 
         # Fusion Terrain
@@ -771,7 +772,7 @@ def export_excel():
         terrain_cell = ws.cell(row=row, column=1, value=terrain_no)
         terrain_cell.font = bold
         terrain_cell.alignment = center
-        terrain_cell.fill = light_fill
+        terrain_cell.fill = fill_terrain
         terrain_cell.border = border
 
         # Colonne Côté
@@ -780,6 +781,8 @@ def export_excel():
 
         ws.cell(row=row, column=2).border = border
         ws.cell(row=row+1, column=2).border = border
+        ws.cell(row=row, column=2).fill = fill_terrain
+        ws.cell(row=row+1, column=2).fill = fill_terrain
 
         col = 3
 
