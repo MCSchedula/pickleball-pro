@@ -784,6 +784,12 @@ def export_excel():
         ws.cell(row=row, column=2).fill = fill_terrain
         ws.cell(row=row+1, column=2).fill = fill_terrain
 
+        ws.cell(row=row, column=1).alignment = center
+        ws.cell(row=row+1, column=1).alignment = center
+
+        ws.cell(row=row, column=2).alignment = center
+        ws.cell(row=row+1, column=2).alignment = center
+
         col = 3
 
         for period in periods:
@@ -815,6 +821,25 @@ def export_excel():
             col += 2
 
         row += 2
+
+        # ==============================
+        # Bordure extérieure du tableau
+        # ==============================
+
+        thick = Side(style='medium', color='000000')
+
+        max_col = 2 + len(periods)*2
+        max_row = row - 1
+
+        # Bordure gauche et droite
+        for r in range(2, max_row+1):
+            ws.cell(row=r, column=1).border = Border(left=thick)
+            ws.cell(row=r, column=max_col).border = Border(right=thick)
+
+        # Bordure haut et bas
+        for c in range(1, max_col+1):
+            ws.cell(row=2, column=c).border = Border(top=thick)
+            ws.cell(row=max_row, column=c).border = Border(bottom=thick)
 
         ws.column_dimensions['A'].width = 10
         ws.column_dimensions['B'].width = 6
