@@ -1356,7 +1356,7 @@ def export_excel():
     ws_day_v2.sheet_properties.pageSetUpPr.fitToPage = True
 
     v2_center = Alignment(horizontal='center', vertical='center', wrap_text=True)
-    v2_left = Alignment(horizontal='left', vertical='center', wrap_text=True)
+    v2_left = Alignment(horizontal='left', vertical='center')
 
     v2_bold = Font(name='Calibri', size=11, bold=True)
     v2_normal = Font(name='Calibri', size=11)
@@ -1401,7 +1401,7 @@ def export_excel():
             ws_day_v2.cell(row=row_number, column=col + 1).border = v2_border
 
             # colonne séparatrice
-            ws_day_v2.column_dimensions[get_column_letter(col + 2)].width = 3
+            ws_day_v2.column_dimensions[get_column_letter(col + 2)].width = 2.5
 
             col += 3
             match_no += 1
@@ -1424,9 +1424,9 @@ def export_excel():
                 )
 
                 cell = ws_day_v2.cell(row=row_v2, column=col, value=f"Terrain {terrain_no}")
-                cell.font = v2_bold
+                cell.font = Font(name='Calibri', size=11, bold=False)  # 👈 moins agressif
                 cell.alignment = v2_center
-                cell.fill = v2_gray
+                cell.fill = PatternFill(fill_type='solid', fgColor='F7F7F7')  # 👈 plus léger
                 cell.border = v2_border
 
                 ws_day_v2.cell(row=row_v2, column=col + 1).fill = v2_gray
@@ -1445,7 +1445,7 @@ def export_excel():
                 for c in [col, col + 1]:
                     ws_day_v2.cell(row=row_v2, column=c).font = v2_bold
                     ws_day_v2.cell(row=row_v2, column=c).alignment = v2_center
-                    ws_day_v2.cell(row=row_v2, column=c).fill = v2_gray
+                    ws_day_v2.cell(row=row_v2, column=c).fill = PatternFill(fill_type='solid', fgColor='EFEFEF')
                     ws_day_v2.cell(row=row_v2, column=c).border = v2_border
 
                 col += 3
@@ -1485,7 +1485,7 @@ def export_excel():
                 row_v2 += 1
 
         # espace entre les blocs de terrains
-        row_v2 += 4
+        row_v2 += 2
 
     # Bloc Assis
     write_v2_header(row_v2)
@@ -1503,7 +1503,7 @@ def export_excel():
         cell = ws_day_v2.cell(row=row_v2, column=col, value='Assis')
         cell.font = v2_bold
         cell.alignment = v2_center
-        cell.fill = v2_gray
+        cell.fill = PatternFill(fill_type='solid', fgColor='EFEFEF')
         cell.border = v2_border
 
         sitting = period.get('sitting', [])
