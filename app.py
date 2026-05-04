@@ -1472,6 +1472,19 @@ def export_excel():
                             value_a = side_a.get('player2', {}).get('fullName', '')
                             value_b = side_b.get('player2', {}).get('fullName', '')
 
+                        gender_a1 = player_gender_map.get(normalize_name(side_a.get('player1', {}).get('fullName', '')), '')
+                        gender_a2 = player_gender_map.get(normalize_name(side_a.get('player2', {}).get('fullName', '')), '')
+                        gender_b1 = player_gender_map.get(normalize_name(side_b.get('player1', {}).get('fullName', '')), '')
+                        gender_b2 = player_gender_map.get(normalize_name(side_b.get('player2', {}).get('fullName', '')), '')
+
+                        mixed_fill = PatternFill(fill_type='solid', fgColor='E2F0D9')
+
+                        if gender_a1 and gender_a2 and gender_a1 != gender_a2:
+                            ws_day_v2.cell(row=row_v2, column=col).fill = mixed_fill
+
+                        if gender_b1 and gender_b2 and gender_b1 != gender_b2:
+                            ws_day_v2.cell(row=row_v2, column=col + 1).fill = mixed_fill
+
                         ws_day_v2.cell(row=row_v2, column=col, value=value_a)
                         ws_day_v2.cell(row=row_v2, column=col + 1, value=value_b)
 
@@ -1532,7 +1545,7 @@ def export_excel():
 
     # Hauteurs
     for r in range(1, row_v2 + 3):
-        ws_day_v2.row_dimensions[r].height = 20
+        ws_day_v2.row_dimensions[r].height = 18
 
     ws_day_v2.freeze_panes = 'A2'
     ws_day_v2.print_area = f"A1:{get_column_letter(3 * len(periods))}{row_v2 + 2}"
