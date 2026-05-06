@@ -317,6 +317,7 @@ def upload_excel():
             member_info = members_map.get(normalize_name(full_name), {})
 
             if not member_info:
+                print("AUCUN MATCH MEMBRES POUR:", full_name)
 
             first_name = member_info.get('first_name', first_name)
             last_name = member_info.get('last_name', last_name)
