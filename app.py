@@ -11,7 +11,6 @@ from collections import Counter
 import random
 
 app = Flask(__name__)
-print("APP STARTED")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pickleball.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -130,7 +129,6 @@ class Setting(db.Model):
 # ==================== ROUTES ====================
 @app.route('/')
 def index():
-    print("HOME OK")
     return render_template('index.html')
 
 @app.route('/api/players', methods=['GET'])
@@ -319,7 +317,6 @@ def upload_excel():
             member_info = members_map.get(normalize_name(full_name), {})
 
             if not member_info:
-                print("AUCUN MATCH MEMBRES POUR:", full_name)
 
             first_name = member_info.get('first_name', first_name)
             last_name = member_info.get('last_name', last_name)
@@ -480,7 +477,6 @@ def calculate_schedule_score(schedule):
 
 @app.route('/api/generate', methods=['POST'])
 def generate_schedule():
-    print("GENERATE CALLED")
     data = request.json
     event_id = data.get('eventId')
     selected_ids = data.get('selectedPlayers', [])
@@ -872,103 +868,173 @@ def export_excel():
     # Alignement des noms
     left = Alignment(horizontal='left', vertical='center', wrap_text=True)
 
-    # ==============================
+      # ==============================
     # Feuille : Cédule pour chaque joueur
     # ==============================
-    ws_players['A1'] = 'Cédule pour chaque joueur'
-    ws_players['A1'].font = Font(bold=True, size=12)
-    ws_players['A1'].alignment = center
 
-    headers_players = ['Joueur', 'Période', 'Heure', 'Terrain', 'Côté', 'Partenaire', 'Adversaire 1', 'Adversaire 2']
+    ws_players = wb.create_sheet('Cédule pour chaque joueur')
+    ws_players.sheet_view.showGridLines = False
+
+    p_center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    p_left = Alignment(horizontal='left', vertical='center', wrap_text=False)
+
+    p_bold = Font(name='Calibri', size=11, bold=True)
+    p_normal = Font(name='Calibri', size=11)
+
+    p_gray = PatternFill(fill_type='solid', fgColor='D9D9D9')
+    p_light = PatternFill(fill_type='solid', fgColor='F7F7F7')
+
+    p_thin = Side(style='thin', color='A6A6A6')
+    p_border = Border(left=p_thin, right=p_thin, top=p_thin, bottom=p_thin)
+
+    # Liste des joueurs A:D
+    headers_players = ['(F) Nom complet', 'Prénom', 'Nom', 'Courriel']
+
     for col_idx, header in enumerate(headers_players, start=1):
-        cell = ws_players.cell(row=2, column=col_idx, value=header)
-        cell.font = bold
-        cell.alignment = center
-        cell.fill = grey_fill
-        cell.border = border
+        cell = ws_players.cell(row=1, column=col_idx, value=header)
+        cell.font = p_bold
+        cell.alignment = p_center
+        cell.fill = p_gray
+        cell.border = p_border
 
-    player_stats = {}
-    player_rows = []
+    selected_players_list = schedule.get('players', [])
+
+    for row_idx, player in enumerate(selected_players_list, start=2):
+        full_name = player.get('fullName', '')
+        first_name = player.get('firstName', '')
+        last_name = player.get('lastName', '')
+        email = player.get('email', '')
+
+        values = [full_name, first_name, last_name, email]
+
+        for col_idx, value in enumerate(values, start=1):
+            cell = ws_players.cell(row=row_idx, column=col_idx, value=value)
+            cell.font = p_normal
+            cell.alignment = p_left
+            cell.border = p_border
+
+    # Construire la cédule individuelle
+    player_schedule = {}
+
+    for player in selected_players_list:
+        name = player.get('fullName', '')
+        if name:
+            player_schedule[name] = []
 
     for period in periods:
-        period_name = period.get('name', '')
         period_time = period.get('time', '')
         courts = period.get('courts', [])
 
         for court in courts:
             terrain = court.get('number', '')
 
-            # Côté A
-            a1 = court['sideA']['player1']['fullName']
-            a2 = court['sideA']['player2']['fullName']
-            b1 = court['sideB']['player1']['fullName']
-            b2 = court['sideB']['player2']['fullName']
+            side_a = court.get('sideA', {})
+            side_b = court.get('sideB', {})
 
-            player_rows.append([a1, period_name, period_time, terrain, 'A', a2, b1, b2])
-            player_rows.append([a2, period_name, period_time, terrain, 'A', a1, b1, b2])
-            player_rows.append([b1, period_name, period_time, terrain, 'B', b2, a1, a2])
-            player_rows.append([b2, period_name, period_time, terrain, 'B', b1, a1, a2])
+            a1 = side_a.get('player1', {})
+            a2 = side_a.get('player2', {})
+            b1 = side_b.get('player1', {})
+            b2 = side_b.get('player2', {})
 
-            for joueur, cote, partenaire, adv1, adv2, periode_nom in [
-                (a1, 'A', a2, b1, b2, period_name),
-                (a2, 'A', a1, b1, b2, period_name),
-                (b1, 'B', b2, a1, a2, period_name),
-                (b2, 'B', b1, a1, a2, period_name),
-            ]:
-                if joueur not in player_stats:
-                    player_stats[joueur] = {
-                        'matches': 0,
-                        'side_a': 0,
-                        'side_b': 0,
-                        'drill': 0,
-                        'partners': set(),
-                        'opponents': set(),
-                    }
+            a1_name = a1.get('fullName', '')
+            a2_name = a2.get('fullName', '')
+            b1_name = b1.get('fullName', '')
+            b2_name = b2.get('fullName', '')
 
-                player_stats[joueur]['matches'] += 1
+            # Chaque joueur est toujours placé en première colonne de son équipe
+            match_rows = [
+                (a1_name, a2_name, b1_name, b2_name, terrain, period_time),
+                (a2_name, a1_name, b1_name, b2_name, terrain, period_time),
+                (b1_name, b2_name, a1_name, a2_name, terrain, period_time),
+                (b2_name, b1_name, a1_name, a2_name, terrain, period_time),
+            ]
 
-                if cote == 'A':
-                    player_stats[joueur]['side_a'] += 1
-                else:
-                    player_stats[joueur]['side_b'] += 1
+            for joueur, partenaire, adv1, adv2, terrain_no, heure in match_rows:
+                if joueur in player_schedule:
+                    player_schedule[joueur].append([
+                        joueur,
+                        partenaire,
+                        adv1,
+                        adv2,
+                        terrain_no,
+                        heure
+                    ])
 
-                if 'Drill' in periode_nom:
-                    player_stats[joueur]['drill'] += 1
+    # Écrire les blocs de cédule
+    block_height = 9
+    matches_per_player = 7
 
-                player_stats[joueur]['partners'].add(partenaire)
-                player_stats[joueur]['opponents'].add(adv1)
-                player_stats[joueur]['opponents'].add(adv2)
+    def write_player_block(start_row, start_col, player_name, matches):
+        for idx in range(matches_per_player):
+            row_num = start_row + idx
 
-    # Trier par joueur puis par heure
-    player_rows.sort(key=lambda x: (x[0], x[2], x[3]))
+            if idx < len(matches):
+                values = matches[idx]
+            else:
+                values = ['', '', '', '', '', '']
 
-    row_players = 3
-    for row_data in player_rows:
-        for col_idx, value in enumerate(row_data, start=1):
-            cell = ws_players.cell(row=row_players, column=col_idx, value=value)
-            cell.alignment = center
-            cell.border = border
-        row_players += 1
+            for offset, value in enumerate(values):
+                cell = ws_players.cell(row=row_num, column=start_col + offset, value=value)
+                cell.font = p_normal
+                cell.alignment = p_left if offset < 4 else p_center
+                cell.border = p_border
 
-    # Largeur des colonnes
-    widths_players = {
-        'A': 28,
-        'B': 16,
-        'C': 12,
-        'D': 10,
-        'E': 8,
-        'F': 28,
-        'G': 28,
-        'H': 28
+        # Lignes de séparation après chaque joueur
+        for spacer_row in [start_row + 7, start_row + 8]:
+            for offset in range(6):
+                cell = ws_players.cell(row=spacer_row, column=start_col + offset)
+                cell.fill = p_light
+
+    row_start = 2
+
+    for idx, player in enumerate(selected_players_list):
+        player_name = player.get('fullName', '')
+        matches = player_schedule.get(player_name, [])
+
+        block_row = row_start + (idx * block_height)
+
+        # Zone principale E:J
+        write_player_block(block_row, 5, player_name, matches)
+
+        # Zone secondaire Q:V, comme dans le VBA
+        write_player_block(block_row, 17, player_name, matches)
+
+    # Largeurs comme le modèle VBA
+    widths = {
+        'A': 21,
+        'B': 13,
+        'C': 13,
+        'D': 28,
+        'E': 21,
+        'F': 13,
+        'G': 13,
+        'H': 13,
+        'I': 5,
+        'J': 12,
+        'K': 13,
+        'L': 13,
+        'M': 13,
+        'N': 13,
+        'O': 13,
+        'P': 13,
+        'Q': 21,
+        'R': 13,
+        'S': 13,
+        'T': 13,
+        'U': 5,
+        'V': 12
     }
 
-    for col_letter, width in widths_players.items():
+    for col_letter, width in widths.items():
         ws_players.column_dimensions[col_letter].width = width
 
-    ws_players.row_dimensions[1].height = 24
-    ws_players.row_dimensions[2].height = 22
-    for r in range(3, row_players):
-        ws_players.row_dimensions[r].height = 22
+    # Hauteur lignes style VBA
+    max_row_players = row_start + (len(selected_players_list) * block_height)
+
+    for r in range(1, max_row_players + 1):
+        ws_players.row_dimensions[r].height = 13.5
+
+    ws_players.freeze_panes = 'E2'
 
     # ==============================
     # Feuille : Cédule - Statistiques
@@ -1535,7 +1601,7 @@ def export_excel():
         ws_day_v2.row_dimensions[r].height = 18
 
     ws_day_v2.freeze_panes = 'A2'
-    ws_day_v2.print_area = f"A1:{get_column_letter(3 * len(periods))}{row_v2 + 2}"
+    #ws_day_v2.print_area = f"A1:{get_column_letter(3 * len(periods))}{row_v2 + 2}"
 
     # ==============================
     # Feuille : Statistiques avancées
