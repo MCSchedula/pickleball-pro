@@ -997,7 +997,7 @@ def export_excel():
         write_player_block(block_row, 5, player_name, matches)
 
         # Zone secondaire Q:V, comme dans le VBA
-        write_player_block(block_row, 17, player_name, matches)
+        #write_player_block(block_row, 17, player_name, matches)
 
     # Largeurs comme le modèle VBA
     widths = {
