@@ -645,7 +645,6 @@ def export_excel():
     thin = Side(style='thin', color='A6A6A6')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
-    ws_players = wb.create_sheet('Cédule pour chaque joueur')
     ws_stats = wb.create_sheet('Cédule - Statistiques')
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
