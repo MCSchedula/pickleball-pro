@@ -1028,6 +1028,10 @@ def export_excel():
     for col_letter, width in widths.items():
         ws_players.column_dimensions[col_letter].width = width
 
+    # Cacher les colonnes A à D
+    for col in ['A', 'B', 'C', 'D']:
+        ws_players.column_dimensions[col].hidden = True
+
     # Hauteur lignes style VBA
     max_row_players = row_start + (len(selected_players_list) * block_height)
 
