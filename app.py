@@ -1219,8 +1219,60 @@ def export_excel():
                     key = (joueur, partenaire)
                     partner_counts[key] = partner_counts.get(key, 0) + 1
 
-    # Trier par joueur puis partenaire
-    sorted_pairs = sorted(partner_counts.items(), key=lambda x: (x[0][0], x[0][1]))
+    # Trier comme VBA :
+    # 1. Nb de fois décroissant
+    # 2. Nom du joueur A-Z
+    # 3. Nom du coéquipier A-Z
+    sorted_pairs = sorted(
+        partner_counts.items(),
+        key=lambda x: (-x[1], x[0][0], x[0][1])
+    )
+
+    # Headers
+    headers = ['Nom du joueur', 'Nom du coéquipier', 'Nb de fois', 'Type Équipe']
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws_partners.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
+
+    row_p = 3
+
+    for (joueur, partenaire), count in sorted_pairs:
+        gender_joueur = player_gender_map.get(normalize_name(joueur), '')
+        gender_partenaire = player_gender_map.get(normalize_name(partenaire), '')
+
+        if gender_joueur and gender_partenaire:
+            if gender_joueur != gender_partenaire:
+                type_equipe = 'MX'
+            elif gender_joueur == 'F':
+                type_equipe = 'DF'
+            else:
+                type_equipe = 'DM'
+        else:
+            type_equipe = ''
+
+        values = [
+            joueur,
+            partenaire,
+            count,
+            type_equipe
+        ]
+
+        for col_idx, value in enumerate(values, start=1):
+            cell = ws_partners.cell(row=row_p, column=col_idx, value=value)
+            cell.alignment = center
+            cell.border = border
+
+        row_p += 1
+
+    # Largeurs colonnes
+    ws_partners.column_dimensions['A'].width = 30
+    ws_partners.column_dimensions['B'].width = 30
+    ws_partners.column_dimensions['C'].width = 12
+    ws_partners.column_dimensions['D'].width = 14
 
     row_p = 3
     for (joueur, partenaire), count in sorted_pairs:
