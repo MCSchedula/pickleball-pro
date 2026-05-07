@@ -1175,6 +1175,16 @@ def export_excel():
 
     filename = "Cedule_de_la_journee.xlsx"
 
+    # Dictionnaire nom complet -> genre
+    player_gender_map = {}
+
+    for p in schedule.get('players', []):
+        full_name = normalize_name(p.get('fullName', ''))
+        gender = str(p.get('gender', '')).strip().upper()
+
+        if full_name and gender:
+            player_gender_map[full_name] = gender
+
     # ==============================
     # Feuille : ParrJoueursCoéquipiers
     # ==============================
@@ -1218,16 +1228,6 @@ def export_excel():
                 if joueur and partenaire:
                     key = (joueur, partenaire)
                     partner_counts[key] = partner_counts.get(key, 0) + 1
-
-    # Dictionnaire nom complet -> genre
-    player_gender_map = {}
-
-    for p in schedule.get('players', []):
-        full_name = normalize_name(p.get('fullName', ''))
-        gender = str(p.get('gender', '')).strip().upper()
-
-        if full_name and gender:
-            player_gender_map[full_name] = gender
 
     # Trier comme VBA :
     # 1. Nb de fois décroissant
