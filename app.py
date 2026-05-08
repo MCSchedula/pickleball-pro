@@ -1410,8 +1410,8 @@ def export_excel():
     ws_opponents.row_dimensions[1].height = 24
     ws_opponents.row_dimensions[2].height = 22
 
-for r in range(3, row_o):
-    ws_opponents.row_dimensions[r].height = 20
+    for r in range(3, row_o):
+       ws_opponents.row_dimensions[r].height = 20
 
     # ==============================
     # Feuille : Double Mixtes
