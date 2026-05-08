@@ -1190,15 +1190,22 @@ def export_excel():
     # ==============================
 
     ws_partners['A1'] = 'ParrJoueursCoéquipiers'
+    ws_partners.merge_cells('A1:D1')
     ws_partners['A1'].font = Font(bold=True, size=14)
     ws_partners['A1'].alignment = center
+    ws_partners.freeze_panes = 'A3'
 
     headers = ['Joueur', 'Partenaire', 'Nb fois']
 
     for col_idx, header in enumerate(headers, start=1):
         cell = ws_partners.cell(row=2, column=col_idx, value=header)
         cell.font = bold
-        cell.alignment = center
+
+        if col_idx in [1, 2]:
+            cell.alignment = Alignment(horizontal='left', vertical='center')
+        else:
+            cell.alignment = center
+
         cell.fill = grey_fill
         cell.border = border
 
@@ -1282,8 +1289,7 @@ def export_excel():
     ws_partners.column_dimensions['A'].width = 30
     ws_partners.column_dimensions['B'].width = 30
     ws_partners.column_dimensions['C'].width = 12
-    ws_partners.column_dimensions['D'].width = 14
-
+    ws_partners.column_dimensions['D'].width = 12
     row_p = 3
     for (joueur, partenaire), count in sorted_pairs:
         ws_partners.cell(row=row_p, column=1, value=joueur).alignment = center
