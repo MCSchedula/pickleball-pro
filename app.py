@@ -1357,31 +1357,61 @@ def export_excel():
                     key = (joueur, adversaire)
                     opponent_counts[key] = opponent_counts.get(key, 0) + 1
 
-    # Trier par joueur puis adversaire
-    sorted_opponents = sorted(opponent_counts.items(), key=lambda x: (x[0][0], x[0][1]))
+    # Trier comme VBA :
+    # 1. Nb de fois décroissant
+    # 2. Nom du joueur A-Z
+    # 3. Nom de l'adversaire A-Z
+    sorted_opponents = sorted(
+        opponent_counts.items(),
+        key=lambda x: (-x[1], x[0][0], x[0][1])
+    )
+
+    # Titre
+    ws_opponents['A1'] = 'ParrJoueursAdversaires'
+    ws_opponents.merge_cells('A1:C1')
+    ws_opponents['A1'].font = Font(bold=True, size=14)
+    ws_opponents['A1'].alignment = center
+
+    # Headers
+    headers_opp = ['Nom du joueur', "Nom de l'adversaire", 'Nb de fois']
+
+    for col_idx, header in enumerate(headers_opp, start=1):
+        cell = ws_opponents.cell(row=2, column=col_idx, value=header)
+        cell.font = bold
+        cell.alignment = center
+        cell.fill = grey_fill
+        cell.border = border
 
     row_o = 3
-    for (joueur, adversaire), count in sorted_opponents:
-        ws_opponents.cell(row=row_o, column=1, value=joueur).alignment = center
-        ws_opponents.cell(row=row_o, column=2, value=adversaire).alignment = center
-        ws_opponents.cell(row=row_o, column=3, value=count).alignment = center
 
-        for c in range(1, 4):
-            ws_opponents.cell(row=row_o, column=c).border = border
+    for (joueur, adversaire), count in sorted_opponents:
+        values = [
+            joueur,
+            adversaire,
+            count
+        ]
+
+        for col_idx, value in enumerate(values, start=1):
+            cell = ws_opponents.cell(row=row_o, column=col_idx, value=value)
+
+            if col_idx in [1, 2]:
+                cell.alignment = Alignment(horizontal='left', vertical='center')
+            else:
+                cell.alignment = center
+
+            cell.border = border
 
         row_o += 1
 
     # Largeurs colonnes
     ws_opponents.column_dimensions['A'].width = 30
     ws_opponents.column_dimensions['B'].width = 30
-    ws_opponents.column_dimensions['C'].width = 10
-
-    # Hauteur lignes
+    ws_opponents.column_dimensions['C'].width = 12
     ws_opponents.row_dimensions[1].height = 24
     ws_opponents.row_dimensions[2].height = 22
 
-    for r in range(3, row_o):
-        ws_opponents.row_dimensions[r].height = 20
+for r in range(3, row_o):
+    ws_opponents.row_dimensions[r].height = 20
 
     # ==============================
     # Feuille : Double Mixtes
