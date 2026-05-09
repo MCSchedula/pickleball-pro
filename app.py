@@ -649,8 +649,6 @@ def export_excel():
     ws_partners = wb.create_sheet('ParrJoueursCoéquipiers')
     ws_opponents = wb.create_sheet('ParrJoueursAdversaires')
 
-    ws_mixed = wb.create_sheet('Double Mixtes')
-
     center = Alignment(horizontal='center', vertical='center', wrap_text=True)
     left = Alignment(horizontal='left', vertical='center', wrap_text=True)
 
