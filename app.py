@@ -560,9 +560,9 @@ def export_excel():
     # Titre principal
     # ==============================
 
-# ==============================
-# En-tête style VBA - Cédule de la journée
-# ==============================
+    # ==============================
+    # En-tête style VBA - Cédule de la journée
+    # ==============================
 
     # Ligne 1 : informations générales
     ws.cell(row=1, column=3, value='Jeudi 2026-04-09 (Drill)')
@@ -1378,7 +1378,12 @@ def export_excel():
     for col_idx, header in enumerate(headers_opp, start=1):
         cell = ws_opponents.cell(row=2, column=col_idx, value=header)
         cell.font = bold
-        cell.alignment = center
+
+        if col_idx in [1, 2]:
+            cell.alignment = Alignment(horizontal='left', vertical='center')
+        else:
+            cell.alignment = center
+
         cell.fill = grey_fill
         cell.border = border
 
@@ -1417,90 +1422,170 @@ def export_excel():
     # Feuille : Double Mixtes
     # ==============================
 
-    ws_mixed['A1'] = 'Double Mixtes'
-    ws_mixed['A1'].font = Font(bold=True, size=14)
-    ws_mixed['A1'].alignment = center
+    ws_mixed = wb.create_sheet('Double Mixtes')
+    ws_mixed.sheet_view.showGridLines = False
 
-    headers = [
-        'Période',
-        'Heure',
-        'Terrain',
-        'Équipe A',
-        'Mixte A',
-        'Équipe B',
-        'Mixte B'
+    dm_center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    dm_left = Alignment(horizontal='left', vertical='center', wrap_text=False)
+
+    dm_bold = Font(name='Calibri', size=11, bold=True)
+    dm_normal = Font(name='Calibri', size=11)
+
+    dm_gray = PatternFill(fill_type='solid', fgColor='D9D9D9')
+
+    dm_thin = Side(style='thin', color='A6A6A6')
+    dm_border = Border(left=dm_thin, right=dm_thin, top=dm_thin, bottom=dm_thin)
+
+    headers_dm = [
+        'Nom du joueur(se)',
+        'Genre',
+        'Niveau',
+        '# partie en Double-Mixtes',
+        '# partie en Double-Femmes',
+        '# partie en Double-Hommes',
+        'En Pause',
+        'Nb Périodes'
     ]
 
-    for col_idx, header in enumerate(headers, start=1):
-        cell = ws_mixed.cell(row=2, column=col_idx, value=header)
-        cell.font = bold
-        cell.alignment = center
-        cell.fill = grey_fill
-        cell.border = border
+    for col_idx, header in enumerate(headers_dm, start=1):
+        cell = ws_mixed.cell(row=1, column=col_idx, value=header)
+        cell.font = dm_bold
+        cell.alignment = dm_center
+        cell.fill = dm_gray
+        cell.border = dm_border
 
-    row_m = 3
+    mixed_stats = {}
+
+    for p in schedule.get('players', []):
+        name = p.get('fullName', '')
+        if not name:
+            continue
+
+        mixed_stats[name] = {
+            'gender': str(p.get('gender', '')).strip().upper(),
+            'level': p.get('level', ''),
+            'mx': 0,
+            'df': 0,
+            'dm': 0,
+            'pause': 0
+        }
 
     for period in periods:
-        period_name = period.get('name', '')
-        period_time = period.get('time', '')
         courts = period.get('courts', [])
 
         for court in courts:
-            terrain = court.get('number', '')
-
             side_a = court.get('sideA', {})
             side_b = court.get('sideB', {})
 
-            a1 = side_a.get('player1', {})
-            a2 = side_a.get('player2', {})
-            b1 = side_b.get('player1', {})
-            b2 = side_b.get('player2', {})
-
-            # Noms
-            team_a = f"{a1.get('fullName', '')} / {a2.get('fullName', '')}"
-            team_b = f"{b1.get('fullName', '')} / {b2.get('fullName', '')}"
-
-            # Mixte
-            gender_a1 = player_gender_map.get(normalize_name(a1.get('fullName', '')), '')
-            gender_a2 = player_gender_map.get(normalize_name(a2.get('fullName', '')), '')
-            gender_b1 = player_gender_map.get(normalize_name(b1.get('fullName', '')), '')
-            gender_b2 = player_gender_map.get(normalize_name(b2.get('fullName', '')), '')
-
-            mix_a = 'Oui' if gender_a1 and gender_a2 and gender_a1 != gender_a2 else 'Non'
-            mix_b = 'Oui' if gender_b1 and gender_b2 and gender_b1 != gender_b2 else 'Non'
-
-            values = [
-                period_name,
-                period_time,
-                terrain,
-                team_a,
-                mix_a,
-                team_b,
-                mix_b
+            teams = [
+                [
+                    side_a.get('player1', {}),
+                    side_a.get('player2', {})
+                ],
+                [
+                    side_b.get('player1', {}),
+                    side_b.get('player2', {})
+                ]
             ]
 
-            for col_idx, value in enumerate(values, start=1):
-                cell = ws_mixed.cell(row=row_m, column=col_idx, value=value)
-                cell.alignment = center
-                cell.border = border
+            for team in teams:
+                p1 = team[0]
+                p2 = team[1]
 
-            row_m += 1
+                name1 = p1.get('fullName', '')
+                name2 = p2.get('fullName', '')
 
-    # Largeurs colonnes
-    ws_mixed.column_dimensions['A'].width = 18
-    ws_mixed.column_dimensions['B'].width = 12
-    ws_mixed.column_dimensions['C'].width = 10
-    ws_mixed.column_dimensions['D'].width = 32
-    ws_mixed.column_dimensions['E'].width = 10
-    ws_mixed.column_dimensions['F'].width = 32
-    ws_mixed.column_dimensions['G'].width = 10
+                gender1 = player_gender_map.get(normalize_name(name1), '')
+                gender2 = player_gender_map.get(normalize_name(name2), '')
 
-    # Hauteur lignes
-    ws_mixed.row_dimensions[1].height = 24
-    ws_mixed.row_dimensions[2].height = 22
+                if not name1 or not name2:
+                    continue
 
-    for r in range(3, row_m):
+                if gender1 and gender2:
+                    if gender1 != gender2:
+                        team_type = 'mx'
+                    elif gender1 == 'F':
+                        team_type = 'df'
+                    else:
+                        team_type = 'dm'
+                else:
+                    team_type = ''
+
+                for name in [name1, name2]:
+                    if name not in mixed_stats:
+                        continue
+
+                    if team_type:
+                        mixed_stats[name][team_type] += 1
+
+    # Joueurs assis / en pause
+    for period in periods:
+        for p in period.get('sitting', []):
+            name = p.get('fullName', '')
+            if name in mixed_stats:
+                mixed_stats[name]['pause'] += 1
+
+    # Tri VBA approximatif :
+    # Double-Mixtes décroissant, puis Double-Hommes/Femmes, puis nom
+    sorted_mixed = sorted(
+        mixed_stats.items(),
+        key=lambda x: (
+            -x[1]['mx'],
+            -x[1]['df'],
+            -x[1]['dm'],
+            x[0]
+        )
+    )
+
+    row_dm = 2
+
+    for name, s in sorted_mixed:
+        nb_periods_formula = f"=SUM(D{row_dm}:G{row_dm})"
+
+        values = [
+            name,
+            s['gender'],
+            s['level'],
+            s['mx'] if s['mx'] else None,
+            s['df'] if s['df'] else None,
+            s['dm'] if s['dm'] else None,
+            s['pause'] if s['pause'] else None,
+            nb_periods_formula
+        ]
+
+        for col_idx, value in enumerate(values, start=1):
+            cell = ws_mixed.cell(row=row_dm, column=col_idx, value=value)
+            cell.font = dm_normal
+            cell.border = dm_border
+
+            if col_idx == 1:
+                cell.alignment = dm_left
+            else:
+                cell.alignment = dm_center
+
+        row_dm += 1
+
+    # Largeurs comme VBA
+    widths_dm = {
+        'A': 24,
+        'B': 10,
+        'C': 10,
+        'D': 22,
+        'E': 22,
+        'F': 22,
+        'G': 12,
+        'H': 12
+    }
+
+    for col_letter, width in widths_dm.items():
+        ws_mixed.column_dimensions[col_letter].width = width
+
+    ws_mixed.row_dimensions[1].height = 30
+
+    for r in range(2, row_dm):
         ws_mixed.row_dimensions[r].height = 20
+
+    ws_mixed.freeze_panes = 'A2'
 
      # ==============================
     # Feuille : Cédule de la journée (V2) - Style original VBA
